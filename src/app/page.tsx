@@ -1,65 +1,270 @@
-import Image from "next/image";
+import { prisma } from "@/lib/db";
+import Link from "next/link";
 
-export default function Home() {
+async function getFeaturedNews() {
+  return prisma.newsArticle.findMany({
+    where: { featured: true },
+    orderBy: { publishedAt: "desc" },
+    take: 2,
+  });
+}
+
+async function getLatestNews() {
+  return prisma.newsArticle.findMany({
+    where: { featured: false },
+    orderBy: { publishedAt: "desc" },
+    take: 4,
+  });
+}
+
+async function getUpcomingEvents() {
+  return prisma.event.findMany({
+    where: { date: { gte: new Date() }, active: true },
+    orderBy: { date: "asc" },
+    take: 6,
+  });
+}
+
+async function getLatestReviews() {
+  return prisma.review.findMany({
+    where: { status: "PUBLISHED" },
+    orderBy: { publishedAt: "desc" },
+    take: 3,
+  });
+}
+
+export default async function HomePage() {
+  const [featuredNews, latestNews, upcomingEvents, latestReviews] =
+    await Promise.all([
+      getFeaturedNews(),
+      getLatestNews(),
+      getUpcomingEvents(),
+      getLatestReviews(),
+    ]);
+
+  const heroArticle = featuredNews[0];
+  const secondFeatured = featuredNews[1];
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
+    <>
+      {/* Hero Section - Dark */}
+      {heroArticle && (
+        <section className="bg-dark-bg">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+              <div>
+                <span className="text-brand text-xs font-medium tracking-widest uppercase">
+                  Featured
+                </span>
+                <h1 className="text-dark-text text-3xl md:text-4xl lg:text-5xl font-bold mt-3 leading-tight">
+                  {heroArticle.title}
+                </h1>
+                <p className="text-dark-muted mt-4 text-lg leading-relaxed">
+                  {heroArticle.summary}
+                </p>
+                <Link
+                  href={`/news/${heroArticle.slug}`}
+                  className="inline-block mt-6 bg-brand hover:bg-brand-hover text-white px-6 py-3 text-sm font-medium tracking-wide transition-colors"
+                >
+                  Read More
+                </Link>
+              </div>
+              {heroArticle.imageUrl && (
+                <div className="aspect-video bg-dark-card overflow-hidden">
+                  <img
+                    src={heroArticle.imageUrl}
+                    alt={heroArticle.title}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              )}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Secondary Featured + Latest News */}
+      <section className="bg-light-bg">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <div className="flex items-center justify-between mb-8">
+            <h2 className="text-2xl font-bold">Latest News</h2>
+            <Link
+              href="/news"
+              className="text-brand hover:text-brand-hover text-sm font-medium transition-colors"
             >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
+              View All →
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {/* Secondary featured - larger card */}
+            {secondFeatured && (
+              <div className="lg:col-span-1">
+                <Link href={`/news/${secondFeatured.slug}`} className="group block">
+                  {secondFeatured.imageUrl && (
+                    <div className="aspect-video bg-light-surface overflow-hidden mb-3">
+                      <img
+                        src={secondFeatured.imageUrl}
+                        alt={secondFeatured.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                    </div>
+                  )}
+                  <span className="text-brand text-xs font-medium tracking-widest uppercase">
+                    Featured
+                  </span>
+                  <h3 className="text-lg font-semibold mt-1 group-hover:text-brand transition-colors">
+                    {secondFeatured.title}
+                  </h3>
+                  <p className="text-light-muted text-sm mt-2 line-clamp-2">
+                    {secondFeatured.summary}
+                  </p>
+                </Link>
+              </div>
+            )}
+
+            {/* Latest news cards */}
+            {latestNews.map((article) => (
+              <div key={article.id}>
+                <Link href={`/news/${article.slug}`} className="group block">
+                  {article.imageUrl && (
+                    <div className="aspect-video bg-light-surface overflow-hidden mb-3">
+                      <img
+                        src={article.imageUrl}
+                        alt={article.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                    </div>
+                  )}
+                  <h3 className="text-lg font-semibold group-hover:text-brand transition-colors">
+                    {article.title}
+                  </h3>
+                  <p className="text-light-muted text-sm mt-2 line-clamp-2">
+                    {article.summary}
+                  </p>
+                  <p className="text-light-muted text-xs mt-2">
+                    {new Date(article.publishedAt).toLocaleDateString("en-IE", {
+                      day: "numeric",
+                      month: "long",
+                      year: "numeric",
+                    })}
+                  </p>
+                </Link>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Upcoming Events */}
+      <section className="bg-light-surface">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <div className="flex items-center justify-between mb-8">
+            <h2 className="text-2xl font-bold">Upcoming Events</h2>
+            <Link
+              href="/events"
+              className="text-brand hover:text-brand-hover text-sm font-medium transition-colors"
             >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+              View All →
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {upcomingEvents.map((event) => (
+              <Link
+                key={event.id}
+                href={`/events/${event.id}`}
+                className="group bg-light-bg border border-light-border p-5 hover:border-brand transition-colors"
+              >
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <span
+                      className={`text-xs font-medium tracking-widest uppercase ${
+                        event.type === "FESTIVAL"
+                          ? "text-brand"
+                          : "text-light-muted"
+                      }`}
+                    >
+                      {event.type === "FESTIVAL" ? "Festival" : "Concert"}
+                    </span>
+                    <h3 className="font-semibold mt-1 group-hover:text-brand transition-colors">
+                      {event.name}
+                    </h3>
+                    <p className="text-light-muted text-sm mt-1">
+                      {event.venue}
+                    </p>
+                    <p className="text-light-muted text-sm">
+                      {event.city}, {event.country}
+                    </p>
+                  </div>
+                  <div className="text-right ml-4 shrink-0">
+                    <div className="text-2xl font-bold text-brand">
+                      {new Date(event.date).getDate()}
+                    </div>
+                    <div className="text-xs text-light-muted uppercase">
+                      {new Date(event.date).toLocaleDateString("en-IE", {
+                        month: "short",
+                      })}
+                    </div>
+                  </div>
+                </div>
+                {event.ticketUrl && (
+                  <div className="mt-3 pt-3 border-t border-light-border">
+                    <span className="text-brand text-xs font-medium">
+                      Get Tickets →
+                    </span>
+                  </div>
+                )}
+              </Link>
+            ))}
+          </div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+      </section>
+
+      {/* Latest Reviews */}
+      <section className="bg-dark-bg">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <div className="flex items-center justify-between mb-8">
+            <h2 className="text-dark-text text-2xl font-bold">Concert Reviews</h2>
+            <Link
+              href="/reviews"
+              className="text-brand hover:text-brand-hover text-sm font-medium transition-colors"
+            >
+              View All →
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {latestReviews.map((review) => (
+              <Link
+                key={review.id}
+                href={`/reviews/${review.slug}`}
+                className="group block bg-dark-surface border border-dark-border p-6 hover:border-brand transition-colors"
+              >
+                <span className="text-brand text-xs font-medium tracking-widest uppercase">
+                  Review
+                </span>
+                <h3 className="text-dark-text font-semibold mt-2 group-hover:text-brand transition-colors">
+                  {review.title}
+                </h3>
+                <div className="text-dark-muted text-sm mt-3 space-y-1">
+                  <p>{review.artist} — {review.venue}</p>
+                  <p>
+                    {new Date(review.eventDate).toLocaleDateString("en-IE", {
+                      day: "numeric",
+                      month: "long",
+                      year: "numeric",
+                    })}
+                  </p>
+                </div>
+                <p className="text-dark-muted text-sm mt-3 line-clamp-3">
+                  {review.body.substring(0, 150)}...
+                </p>
+              </Link>
+            ))}
+          </div>
         </div>
-      </main>
-    </div>
+      </section>
+    </>
   );
 }
