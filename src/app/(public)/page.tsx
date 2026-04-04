@@ -3,7 +3,7 @@ import Link from "next/link";
 
 async function getFeaturedNews() {
   return prisma.newsArticle.findMany({
-    where: { featured: true },
+    where: { featured: true, hidden: false },
     orderBy: { publishedAt: "desc" },
     take: 2,
   });
@@ -11,7 +11,7 @@ async function getFeaturedNews() {
 
 async function getLatestNews() {
   return prisma.newsArticle.findMany({
-    where: { featured: false },
+    where: { featured: false, hidden: false },
     orderBy: { publishedAt: "desc" },
     take: 4,
   });

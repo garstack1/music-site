@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/db";
-import Link from "next/link";
+import SaveEventButton from "@/components/events/SaveEventButton";
 
 export const metadata = {
   title: "Events - MusicSite",
@@ -11,6 +11,16 @@ async function getEvents() {
     where: { active: true, date: { gte: new Date() } },
     orderBy: { date: "asc" },
   });
+}
+
+function TicketLink({ url }: { url: string }) {
+  return (
+    <span
+      dangerouslySetInnerHTML={{
+        __html: `<a href="${url}" target="_blank" rel="noopener noreferrer" class="inline-block bg-brand hover:bg-brand-hover text-white px-4 py-2 text-xs font-medium tracking-wide transition-colors">Get Tickets →</a>`,
+      }}
+    />
+  );
 }
 
 export default async function EventsPage() {
@@ -47,12 +57,15 @@ export default async function EventsPage() {
               {festivals.map((event) => (
                 <div
                   key={event.id}
-                  className="bg-light-bg border border-light-border p-6 hover:border-brand transition-colors"
+                  className="bg-light-bg border border-light-border p-6 hover:border-brand transition-colors relative"
                 >
+                  <div className="absolute top-4 right-4">
+                    <SaveEventButton eventId={event.id} />
+                  </div>
                   <span className="text-brand text-xs font-medium tracking-widest uppercase">
                     Festival
                   </span>
-                  <h3 className="text-lg font-bold mt-2">{event.name}</h3>
+                  <h3 className="text-lg font-bold mt-2 pr-8">{event.name}</h3>
                   <p className="text-light-muted text-sm mt-1">{event.venue}</p>
                   <p className="text-light-muted text-sm">
                     {event.city}, {event.country}
@@ -65,7 +78,7 @@ export default async function EventsPage() {
                     </span>
                     {event.endDate && (
                       <>
-                        <span className="text-light-muted">—</span>
+                        <span className="text-light-muted">{"—"}</span>
                         <span className="font-medium">
                           {new Date(event.endDate).toLocaleDateString("en-IE", {
                             day: "numeric", month: "short", year: "numeric",
@@ -80,15 +93,9 @@ export default async function EventsPage() {
                     </p>
                   )}
                   {event.ticketUrl && (
-                    <a
-                    
-                      href={event.ticketUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-block mt-4 bg-brand hover:bg-brand-hover text-white px-4 py-2 text-xs font-medium tracking-wide transition-colors"
-                    >
-                      Get Tickets →
-                    </a>
+                    <div className="mt-4">
+                      <TicketLink url={event.ticketUrl} />
+                    </div>
                   )}
                 </div>
               ))}
@@ -110,7 +117,6 @@ export default async function EventsPage() {
                   key={event.id}
                   className="flex items-center gap-6 border-b border-light-border pb-4 group"
                 >
-                  {/* Date block */}
                   <div className="text-center w-16 shrink-0">
                     <div className="text-2xl font-bold text-brand">
                       {new Date(event.date).getDate()}
@@ -120,13 +126,12 @@ export default async function EventsPage() {
                     </div>
                   </div>
 
-                  {/* Details */}
                   <div className="flex-1">
                     <h3 className="font-semibold group-hover:text-brand transition-colors">
                       {event.name}
                     </h3>
                     <p className="text-light-muted text-sm">
-                      {event.venue} — {event.city}, {event.country}
+                      {event.venue} {"—"} {event.city}, {event.country}
                     </p>
                     {event.genre && (
                       <span className="text-xs bg-light-surface text-light-muted px-2 py-1 mt-1 inline-block">
@@ -135,18 +140,14 @@ export default async function EventsPage() {
                     )}
                   </div>
 
-                  {/* Ticket link */}
-                  {event.ticketUrl && (
-                    <a
-                    
-                      href={event.ticketUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="shrink-0 bg-brand hover:bg-brand-hover text-white px-4 py-2 text-xs font-medium tracking-wide transition-colors hidden sm:block"
-                    >
-                      Get Tickets →
-                    </a>
-                  )}
+                  <div className="flex items-center gap-2 shrink-0">
+                    <SaveEventButton eventId={event.id} />
+                    {event.ticketUrl && (
+                      <div className="hidden sm:block">
+                        <TicketLink url={event.ticketUrl} />
+                      </div>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>

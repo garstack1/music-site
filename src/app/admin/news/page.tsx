@@ -20,6 +20,7 @@ interface NewsArticle {
   sourceUrl: string;
   imageUrl: string | null;
   featured: boolean;
+  hidden: boolean;
   manual: boolean;
   publishedAt: string;
   tags: ArticleTag[];
@@ -30,6 +31,7 @@ export default function AdminNewsPage() {
   const [articles, setArticles] = useState<NewsArticle[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [showHidden, setShowHidden] = useState(false);
 
   const fetchArticles = useCallback(async () => {
     try {
@@ -60,6 +62,19 @@ export default function AdminNewsPage() {
     }
   }
 
+  async function handleToggleHidden(id: string, currentHidden: boolean) {
+    try {
+      await fetch(`/api/admin/news/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ hidden: !currentHidden }),
+      });
+      fetchArticles();
+    } catch {
+      setError("Failed to update article");
+    }
+  }
+
   async function handleDelete(id: string, title: string) {
     if (!confirm(`Delete "${title}"? This cannot be undone.`)) return;
 
@@ -76,6 +91,12 @@ export default function AdminNewsPage() {
     }
   }
 
+  const filteredArticles = showHidden
+    ? articles
+    : articles.filter((a) => !a.hidden);
+
+  const hiddenCount = articles.filter((a) => a.hidden).length;
+
   if (loading) {
     return (
       <div>
@@ -89,12 +110,22 @@ export default function AdminNewsPage() {
     <div>
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-dark-text text-2xl font-bold">News Articles</h1>
-        <Link
-          href="/admin/news/new"
-          className="bg-brand hover:bg-brand-hover text-white px-4 py-2 text-sm font-medium transition-colors"
-        >
-          + New Article
-        </Link>
+        <div className="flex items-center gap-3">
+          {hiddenCount > 0 && (
+            <button
+              onClick={() => setShowHidden(!showHidden)}
+              className="text-dark-muted hover:text-dark-text text-xs transition-colors"
+            >
+              {showHidden ? "Hide hidden" : `Show hidden (${hiddenCount})`}
+            </button>
+          )}
+          <Link
+            href="/admin/news/new"
+            className="bg-brand hover:bg-brand-hover text-white px-4 py-2 text-sm font-medium transition-colors"
+          >
+            + New Article
+          </Link>
+        </div>
       </div>
 
       {error && (
@@ -106,9 +137,9 @@ export default function AdminNewsPage() {
         </div>
       )}
 
-      {articles.length === 0 ? (
+      {filteredArticles.length === 0 ? (
         <div className="bg-dark-surface border border-dark-border p-8 text-center">
-          <p className="text-dark-muted text-sm">No articles yet.</p>
+          <p className="text-dark-muted text-sm">No articles to show.</p>
         </div>
       ) : (
         <div className="bg-dark-surface border border-dark-border">
@@ -119,13 +150,19 @@ export default function AdminNewsPage() {
                 <th className="text-center text-dark-muted text-xs font-medium px-4 py-3 hidden md:table-cell">Source</th>
                 <th className="text-center text-dark-muted text-xs font-medium px-4 py-3 hidden md:table-cell">Tags</th>
                 <th className="text-center text-dark-muted text-xs font-medium px-4 py-3">Featured</th>
+                <th className="text-center text-dark-muted text-xs font-medium px-4 py-3">Visible</th>
                 <th className="text-center text-dark-muted text-xs font-medium px-4 py-3 hidden md:table-cell">Date</th>
                 <th className="text-right text-dark-muted text-xs font-medium px-4 py-3">Actions</th>
               </tr>
             </thead>
             <tbody>
-              {articles.map((article) => (
-                <tr key={article.id} className="border-b border-dark-border last:border-0 hover:bg-dark-bg/50 transition-colors">
+              {filteredArticles.map((article) => (
+                <tr
+                  key={article.id}
+                  className={`border-b border-dark-border last:border-0 hover:bg-dark-bg/50 transition-colors ${
+                    article.hidden ? "opacity-50" : ""
+                  }`}
+                >
                   <td className="px-4 py-3">
                     <span className="text-dark-text text-sm line-clamp-1">{article.title}</span>
                     <span className="text-dark-muted text-xs block mt-0.5">
@@ -159,6 +196,18 @@ export default function AdminNewsPage() {
                       }`}
                     >
                       {article.featured ? "Featured" : "Normal"}
+                    </button>
+                  </td>
+                  <td className="px-4 py-3 text-center">
+                    <button
+                      onClick={() => handleToggleHidden(article.id, article.hidden)}
+                      className={`inline-block text-xs font-medium px-2 py-0.5 rounded ${
+                        article.hidden
+                          ? "bg-red-900/30 text-red-400"
+                          : "bg-green-900/30 text-green-400"
+                      }`}
+                    >
+                      {article.hidden ? "Hidden" : "Visible"}
                     </button>
                   </td>
                   <td className="px-4 py-3 text-center hidden md:table-cell">

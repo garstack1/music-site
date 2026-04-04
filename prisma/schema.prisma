@@ -50,6 +50,7 @@ model NewsArticle {
   sourceUrl   String    @unique
   imageUrl    String?
   featured    Boolean   @default(false)
+  hidden      Boolean   @default(false)
   manual      Boolean   @default(false)
   body        String?
   rssFeed     RssFeed?  @relation(fields: [rssFeedId], references: [id])
