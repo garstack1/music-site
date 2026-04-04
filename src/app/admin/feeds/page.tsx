@@ -12,6 +12,13 @@ interface RssFeed {
   _count: { articles: number };
 }
 
+interface PollResult {
+  feedName: string;
+  newArticles: number;
+  skipped: number;
+  errors: string[];
+}
+
 export default function AdminFeedsPage() {
   const [feeds, setFeeds] = useState<RssFeed[]>([]);
   const [loading, setLoading] = useState(true);
@@ -20,6 +27,8 @@ export default function AdminFeedsPage() {
   const [adding, setAdding] = useState(false);
   const [error, setError] = useState("");
   const [showForm, setShowForm] = useState(false);
+  const [polling, setPolling] = useState<string | null>(null);
+  const [pollResults, setPollResults] = useState<PollResult[] | null>(null);
 
   const fetchFeeds = useCallback(async () => {
     try {
@@ -97,6 +106,35 @@ export default function AdminFeedsPage() {
     }
   }
 
+  async function handlePoll(feedId?: string) {
+    setPolling(feedId || "all");
+    setPollResults(null);
+    setError("");
+
+    try {
+      const res = await fetch("/api/admin/feeds/poll", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(feedId ? { feedId } : {}),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.error || "Polling failed");
+        setPolling(null);
+        return;
+      }
+
+      setPollResults(data.results);
+      fetchFeeds();
+    } catch {
+      setError("Polling failed");
+    } finally {
+      setPolling(null);
+    }
+  }
+
   if (loading) {
     return (
       <div>
@@ -110,12 +148,21 @@ export default function AdminFeedsPage() {
     <div>
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-dark-text text-2xl font-bold">RSS Feeds</h1>
-        <button
-          onClick={() => setShowForm(!showForm)}
-          className="bg-brand hover:bg-brand-hover text-white px-4 py-2 text-sm font-medium transition-colors"
-        >
-          {showForm ? "Cancel" : "+ Add Feed"}
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => handlePoll()}
+            disabled={polling !== null}
+            className="bg-dark-surface border border-dark-border hover:border-brand text-dark-text px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50"
+          >
+            {polling === "all" ? "Polling all..." : "Poll All Feeds"}
+          </button>
+          <button
+            onClick={() => setShowForm(!showForm)}
+            className="bg-brand hover:bg-brand-hover text-white px-4 py-2 text-sm font-medium transition-colors"
+          >
+            {showForm ? "Cancel" : "+ Add Feed"}
+          </button>
+        </div>
       </div>
 
       {error && (
@@ -123,6 +170,40 @@ export default function AdminFeedsPage() {
           {error}
           <button onClick={() => setError("")} className="ml-3 text-red-300 hover:text-white">
             ✕
+          </button>
+        </div>
+      )}
+
+      {/* Poll Results */}
+      {pollResults && (
+        <div className="mb-6 bg-dark-surface border border-dark-border p-4">
+          <h3 className="text-dark-text text-sm font-semibold mb-3">Poll Results</h3>
+          <div className="space-y-2">
+            {pollResults.map((r, i) => (
+              <div key={i} className="flex items-center justify-between text-sm">
+                <span className="text-dark-text">{r.feedName}</span>
+                <div className="flex items-center gap-4">
+                  {r.newArticles > 0 && (
+                    <span className="text-green-400 text-xs">{r.newArticles} new</span>
+                  )}
+                  {r.skipped > 0 && (
+                    <span className="text-dark-muted text-xs">{r.skipped} skipped</span>
+                  )}
+                  {r.errors.length > 0 && (
+                    <span className="text-red-400 text-xs">{r.errors.length} errors</span>
+                  )}
+                  {r.newArticles === 0 && r.errors.length === 0 && (
+                    <span className="text-dark-muted text-xs">Up to date</span>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+          <button
+            onClick={() => setPollResults(null)}
+            className="text-dark-muted hover:text-dark-text text-xs mt-3 transition-colors"
+          >
+            Dismiss
           </button>
         </div>
       )}
@@ -224,12 +305,21 @@ export default function AdminFeedsPage() {
                     </span>
                   </td>
                   <td className="px-4 py-3 text-right">
-                    <button
-                      onClick={() => handleDelete(feed.id, feed.name)}
-                      className="text-dark-muted hover:text-brand text-xs transition-colors"
-                    >
-                      Delete
-                    </button>
+                    <div className="flex items-center justify-end gap-3">
+                      <button
+                        onClick={() => handlePoll(feed.id)}
+                        disabled={polling !== null}
+                        className="text-dark-muted hover:text-green-400 text-xs transition-colors disabled:opacity-50"
+                      >
+                        {polling === feed.id ? "Polling..." : "Poll"}
+                      </button>
+                      <button
+                        onClick={() => handleDelete(feed.id, feed.name)}
+                        className="text-dark-muted hover:text-brand text-xs transition-colors"
+                      >
+                        Delete
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
