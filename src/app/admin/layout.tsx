@@ -1,4 +1,5 @@
 import Link from "next/link";
+import LogoutButton from "@/components/admin/LogoutButton";
 
 export default function AdminLayout({
   children,
@@ -41,16 +42,11 @@ export default function AdminLayout({
               <Link href="/" className="text-dark-muted hover:text-dark-text text-xs transition-colors">
                 View Site →
               </Link>
-              <form action="/api/auth/logout" method="POST">
-                <button type="submit" className="text-dark-muted hover:text-brand text-xs transition-colors">
-                  Logout
-                </button>
-              </form>
+              <LogoutButton />
             </div>
           </div>
         </div>
       </header>
-
       {/* Admin Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {children}

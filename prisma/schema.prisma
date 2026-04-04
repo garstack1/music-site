@@ -129,6 +129,7 @@ model Review {
   eventDate     DateTime
   setlist       String?
   body          String
+  coverImage    String?
   status        ReviewStatus   @default(DRAFT)
   publishedAt   DateTime?
   createdAt     DateTime       @default(now())

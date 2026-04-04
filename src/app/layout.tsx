@@ -1,7 +1,5 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import Header from "@/components/layout/Header";
-import Footer from "@/components/layout/Footer";
 
 export const metadata: Metadata = {
   title: "MusicSite - News, Events & Reviews",
@@ -15,10 +13,8 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className="bg-light-bg text-light-text antialiased min-h-screen flex flex-col">
-        <Header />
-        <main className="flex-grow">{children}</main>
-        <Footer />
+      <body className="antialiased min-h-screen">
+        {children}
       </body>
     </html>
   );
