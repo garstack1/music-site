@@ -53,6 +53,7 @@ export async function PATCH(
     if (body.imageUrl !== undefined) updateData.imageUrl = body.imageUrl || null;
     if (body.genre !== undefined) updateData.genre = body.genre || null;
     if (body.active !== undefined) updateData.active = body.active;
+    if (body.featured !== undefined) updateData.featured = body.featured;
 
     const updated = await prisma.event.update({
       where: { id },
