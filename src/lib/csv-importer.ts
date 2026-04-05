@@ -265,6 +265,13 @@ export async function importCsvSource(sourceId: string): Promise<CsvImportResult
         const priceMin = parsePrice(row.price_min || "");
         const priceMax = parsePrice(row.price_max || "");
         const imageUrl = row.image_url?.trim() || null;
+        const artistWebsite = row.artist_website?.trim() || null;
+        const artistFacebook = row.artist_facebook?.trim() || null;
+        const artistTwitter = row.artist_twitter?.trim() || null;
+        const artistInstagram = row.artist_instagram?.trim() || null;
+        const artistSpotify = row.artist_spotify?.trim() || null;
+        const artistYoutube = row.artist_youtube?.trim() || null;
+        const artistTiktok = row.artist_tiktok?.trim() || null;
 
         const dateStr = date.toISOString().split("T")[0];
         const fp = "csv-" + slugify([artist || name, venue, city, dateStr].filter(Boolean).join("-"));
@@ -324,6 +331,13 @@ export async function importCsvSource(sourceId: string): Promise<CsvImportResult
           source: "CSV" as const,
           fingerprint: fp,
           active: true,
+          artistWebsite,
+          artistFacebook,
+          artistTwitter,
+          artistInstagram,
+          artistSpotify,
+          artistYoutube,
+          artistTiktok,
         };
 
         if (existingCsv) {

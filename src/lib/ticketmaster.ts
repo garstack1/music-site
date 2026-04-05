@@ -45,7 +45,18 @@ interface TmEvent {
       country?: { countryCode: string };
       location?: { longitude: string; latitude: string };
     }[];
-    attractions?: { name: string }[];
+    attractions?: {
+      name: string;
+      externalLinks?: {
+        facebook?: { url: string }[];
+        twitter?: { url: string }[];
+        instagram?: { url: string }[];
+        spotify?: { url: string }[];
+        youtube?: { url: string }[];
+        tiktok?: { url: string }[];
+        homepage?: { url: string }[];
+      };
+    }[];
   };
   images?: { url: string; width: number; height: number; ratio?: string }[];
 }
@@ -92,6 +103,28 @@ function getSubGenre(event: TmEvent): string | null {
     }
   }
   return null;
+}
+
+function getSocialLinks(event: TmEvent) {
+  const links = event._embedded?.attractions?.[0]?.externalLinks;
+  if (!links) return {
+    artistWebsite: null,
+    artistFacebook: null,
+    artistTwitter: null,
+    artistInstagram: null,
+    artistSpotify: null,
+    artistYoutube: null,
+    artistTiktok: null,
+  };
+  return {
+    artistWebsite: links.homepage?.[0]?.url || null,
+    artistFacebook: links.facebook?.[0]?.url || null,
+    artistTwitter: links.twitter?.[0]?.url || null,
+    artistInstagram: links.instagram?.[0]?.url || null,
+    artistSpotify: links.spotify?.[0]?.url || null,
+    artistYoutube: links.youtube?.[0]?.url || null,
+    artistTiktok: links.tiktok?.[0]?.url || null,
+  };
 }
 
 function getDescription(event: TmEvent): string | null {
@@ -186,6 +219,7 @@ async function importEvents(
           const subGenre = getSubGenre(tm);
           const description = getDescription(tm);
           const priceRange = tm.priceRanges?.[0];
+          const socialLinks = getSocialLinks(tm);
 
           const existing = await prisma.event.findFirst({
             where: {
@@ -217,6 +251,7 @@ async function importEvents(
             latitude: venue?.location?.latitude ? parseFloat(venue.location.latitude) : null,
             longitude: venue?.location?.longitude ? parseFloat(venue.location.longitude) : null,
             active: true,
+            ...socialLinks,
           };
 
           if (existing) {
@@ -235,6 +270,13 @@ async function importEvents(
                 priceCurrency: eventData.priceCurrency,
                 latitude: eventData.latitude,
                 longitude: eventData.longitude,
+                artistWebsite: eventData.artistWebsite || undefined,
+                artistFacebook: eventData.artistFacebook || undefined,
+                artistTwitter: eventData.artistTwitter || undefined,
+                artistInstagram: eventData.artistInstagram || undefined,
+                artistSpotify: eventData.artistSpotify || undefined,
+                artistYoutube: eventData.artistYoutube || undefined,
+                artistTiktok: eventData.artistTiktok || undefined,
               },
             });
             result.updated++;

@@ -121,6 +121,13 @@ model Event {
   priceMin      Float?
   priceMax      Float?
   priceCurrency String?
+  artistWebsite String?
+  artistFacebook String?
+  artistTwitter  String?
+  artistInstagram String?
+  artistSpotify  String?
+  artistYoutube  String?
+  artistTiktok   String?
   source        EventSource
   sourceId      String?
   fingerprint   String?
