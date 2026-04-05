@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import Link from "next/link";
 
 interface Event {
@@ -29,12 +29,18 @@ interface ImportResult {
   errors: string[];
 }
 
+type SortField = "name" | "type" | "location" | "date" | "source" | "featured" | "active";
+type SortDir = "asc" | "desc";
+
 export default function AdminEventsPage() {
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [importing, setImporting] = useState(false);
   const [importResults, setImportResults] = useState<ImportResult[] | null>(null);
+  const [search, setSearch] = useState("");
+  const [sortField, setSortField] = useState<SortField>("date");
+  const [sortDir, setSortDir] = useState<SortDir>("desc");
 
   const fetchEvents = useCallback(async () => {
     try {
@@ -51,6 +57,57 @@ export default function AdminEventsPage() {
   useEffect(() => {
     fetchEvents();
   }, [fetchEvents]);
+
+  function handleSort(field: SortField) {
+    if (sortField === field) {
+      setSortDir(sortDir === "asc" ? "desc" : "asc");
+    } else {
+      setSortField(field);
+      setSortDir(field === "date" ? "desc" : "asc");
+    }
+  }
+
+  const filtered = useMemo(() => {
+    let result = events;
+
+    if (search.trim()) {
+      const terms = search.toLowerCase().split(/\s+/);
+      result = result.filter((e) => {
+        const searchable = [e.name, e.artist, e.venue, e.city, e.country, e.genre, e.source, e.type].filter(Boolean).join(" ").toLowerCase();
+        return terms.every((t) => searchable.includes(t));
+      });
+    }
+
+    result = [...result].sort((a, b) => {
+      let cmp = 0;
+      switch (sortField) {
+        case "name":
+          cmp = a.name.localeCompare(b.name);
+          break;
+        case "type":
+          cmp = a.type.localeCompare(b.type);
+          break;
+        case "location":
+          cmp = (a.city || "").localeCompare(b.city || "");
+          break;
+        case "date":
+          cmp = new Date(a.date).getTime() - new Date(b.date).getTime();
+          break;
+        case "source":
+          cmp = a.source.localeCompare(b.source);
+          break;
+        case "featured":
+          cmp = (a.featured ? 1 : 0) - (b.featured ? 1 : 0);
+          break;
+        case "active":
+          cmp = (a.active ? 1 : 0) - (b.active ? 1 : 0);
+          break;
+      }
+      return sortDir === "asc" ? cmp : -cmp;
+    });
+
+    return result;
+  }, [events, search, sortField, sortDir]);
 
   async function handleToggle(id: string, field: "active" | "featured", current: boolean) {
     try {
@@ -107,6 +164,25 @@ export default function AdminEventsPage() {
     csv: events.filter((e) => e.source === "CSV").length,
   };
 
+  function SortHeader({ field, label }: { field: SortField; label: string }) {
+    const isActive = sortField === field;
+    return (
+      <button
+        onClick={() => handleSort(field)}
+        className={`flex items-center gap-1 text-xs font-medium transition-colors ${
+          isActive ? "text-brand" : "text-dark-muted hover:text-dark-text"
+        }`}
+      >
+        {label}
+        {isActive && (
+          <svg className={`w-3 h-3 ${sortDir === "desc" ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" />
+          </svg>
+        )}
+      </button>
+    );
+  }
+
   if (loading) {
     return (
       <div>
@@ -118,7 +194,7 @@ export default function AdminEventsPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex items-center justify-between mb-6">
         <h1 className="text-dark-text text-2xl font-bold">Events</h1>
         <div className="flex items-center gap-3">
           <button
@@ -137,12 +213,42 @@ export default function AdminEventsPage() {
         </div>
       </div>
 
-      <div className="flex gap-4 mb-6">
-        <span className="text-dark-muted text-xs">Total: <span className="text-dark-text">{events.length}</span></span>
-        <span className="text-dark-muted text-xs">Manual: <span className="text-dark-text">{sourceCount.manual}</span></span>
-        <span className="text-dark-muted text-xs">Ticketmaster: <span className="text-dark-text">{sourceCount.ticketmaster}</span></span>
-        <span className="text-dark-muted text-xs">Featured: <span className="text-amber-400">{events.filter((e) => e.featured).length}</span></span>
+      {/* Stats & Search */}
+      <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+        <div className="flex gap-4">
+          <span className="text-dark-muted text-xs">Total: <span className="text-dark-text">{events.length}</span></span>
+          <span className="text-dark-muted text-xs">Manual: <span className="text-dark-text">{sourceCount.manual}</span></span>
+          <span className="text-dark-muted text-xs">Ticketmaster: <span className="text-dark-text">{sourceCount.ticketmaster}</span></span>
+          <span className="text-dark-muted text-xs">Featured: <span className="text-amber-400">{events.filter((e) => e.featured).length}</span></span>
+          {sourceCount.csv > 0 && <span className="text-dark-muted text-xs">CSV: <span className="text-dark-text">{sourceCount.csv}</span></span>}
+        </div>
+        <div className="relative">
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search events..."
+            className="w-64 px-3 py-1.5 pl-8 bg-dark-surface border border-dark-border text-dark-text text-sm placeholder-dark-muted focus:outline-none focus:border-brand transition-colors"
+          />
+          <svg className="w-4 h-4 text-dark-muted absolute left-2.5 top-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          {search && (
+            <button
+              onClick={() => setSearch("")}
+              className="absolute right-2 top-1.5 text-dark-muted hover:text-dark-text text-xs"
+            >
+              ✕
+            </button>
+          )}
+        </div>
       </div>
+
+      {search && (
+        <p className="text-dark-muted text-xs mb-4">
+          Showing {filtered.length} of {events.length} events
+        </p>
+      )}
 
       {error && (
         <div className="mb-6 px-4 py-3 bg-red-900/30 border border-red-800/50 text-red-400 text-sm">
@@ -175,27 +281,27 @@ export default function AdminEventsPage() {
         </div>
       )}
 
-      {events.length === 0 ? (
+      {filtered.length === 0 ? (
         <div className="bg-dark-surface border border-dark-border p-8 text-center">
-          <p className="text-dark-muted text-sm">No events yet.</p>
+          <p className="text-dark-muted text-sm">{search ? "No events match your search." : "No events yet."}</p>
         </div>
       ) : (
         <div className="bg-dark-surface border border-dark-border overflow-x-auto">
           <table className="w-full">
             <thead>
               <tr className="border-b border-dark-border">
-                <th className="text-left text-dark-muted text-xs font-medium px-4 py-3">Event</th>
-                <th className="text-center text-dark-muted text-xs font-medium px-4 py-3 hidden md:table-cell">Type</th>
-                <th className="text-center text-dark-muted text-xs font-medium px-4 py-3 hidden md:table-cell">Location</th>
-                <th className="text-center text-dark-muted text-xs font-medium px-4 py-3">Date</th>
-                <th className="text-center text-dark-muted text-xs font-medium px-4 py-3 hidden md:table-cell">Source</th>
-                <th className="text-center text-dark-muted text-xs font-medium px-4 py-3">Featured</th>
-                <th className="text-center text-dark-muted text-xs font-medium px-4 py-3">Status</th>
+                <th className="text-left px-4 py-3"><SortHeader field="name" label="Event" /></th>
+                <th className="text-center px-4 py-3 hidden md:table-cell"><SortHeader field="type" label="Type" /></th>
+                <th className="text-center px-4 py-3 hidden md:table-cell"><SortHeader field="location" label="Location" /></th>
+                <th className="text-center px-4 py-3"><SortHeader field="date" label="Date" /></th>
+                <th className="text-center px-4 py-3 hidden md:table-cell"><SortHeader field="source" label="Source" /></th>
+                <th className="text-center px-4 py-3"><SortHeader field="featured" label="Featured" /></th>
+                <th className="text-center px-4 py-3"><SortHeader field="active" label="Status" /></th>
                 <th className="text-right text-dark-muted text-xs font-medium px-4 py-3">Actions</th>
               </tr>
             </thead>
             <tbody>
-              {events.map((event) => (
+              {filtered.map((event) => (
                 <tr key={event.id} className="border-b border-dark-border last:border-0 hover:bg-dark-bg/50 transition-colors">
                   <td className="px-4 py-3">
                     <span className="text-dark-text text-sm line-clamp-1">{event.name}</span>
