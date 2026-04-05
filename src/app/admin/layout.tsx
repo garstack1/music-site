@@ -39,6 +39,9 @@ export default function AdminLayout({
                 <Link href="/admin/moderation" className="text-dark-muted hover:text-dark-text text-xs transition-colors">
                   Moderation
                 </Link>
+                <Link href="/admin/settings" className="text-dark-muted hover:text-dark-text text-xs transition-colors">
+                  Settings
+                </Link>
               </nav>
             </div>
             <div className="flex items-center gap-4">

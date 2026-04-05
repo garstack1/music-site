@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/db";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import PublicReviewForm from "@/components/reviews/PublicReviewForm";
 
 async function getReview(slug: string) {
   return prisma.review.findUnique({
@@ -16,13 +17,23 @@ async function getReview(slug: string) {
   });
 }
 
+async function isPublicReviewsEnabled() {
+  const setting = await prisma.siteSetting.findUnique({
+    where: { key: "public_reviews_enabled" },
+  });
+  return setting?.value === "true";
+}
+
 export default async function ReviewPage({
   params,
 }: {
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const review = await getReview(slug);
+  const [review, reviewsEnabled] = await Promise.all([
+    getReview(slug),
+    isPublicReviewsEnabled(),
+  ]);
 
   if (!review) notFound();
 
@@ -40,7 +51,7 @@ export default async function ReviewPage({
       <section className="bg-dark-bg">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <Link href="/reviews" className="text-dark-muted hover:text-dark-text text-sm transition-colors">
-            ← Back to Reviews
+            {"<-"} Back to Reviews
           </Link>
           <span className="block text-brand text-xs font-medium tracking-widest uppercase mt-6">
             Concert Review
@@ -115,7 +126,7 @@ export default async function ReviewPage({
           <div className="mt-10">
             <h2 className="text-lg font-bold mb-6">
               User Reviews
-              {review.publicReviews.length === 0 && (
+              {review.publicReviews.length === 0 && reviewsEnabled && (
                 <span className="text-light-muted text-sm font-normal ml-2">
                   No reviews yet — be the first!
                 </span>
@@ -142,6 +153,9 @@ export default async function ReviewPage({
               ))}
             </div>
           </div>
+
+          {/* Review Form */}
+          <PublicReviewForm slug={slug} enabled={reviewsEnabled} />
         </div>
       </section>
     </>

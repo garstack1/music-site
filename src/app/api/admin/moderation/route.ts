@@ -9,7 +9,6 @@ export async function GET() {
   }
 
   const reviews = await prisma.publicReview.findMany({
-    where: { flagged: true },
     orderBy: { createdAt: "desc" },
     include: {
       review: { select: { title: true, artist: true, slug: true } },
