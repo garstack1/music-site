@@ -42,6 +42,19 @@ model RssFeed {
   articles    NewsArticle[]
 }
 
+// ============================================
+// ORGANISERS IMPORT
+// ============================================
+model CsvSource {
+  id          String    @id @default(cuid())
+  name        String
+  url         String    @unique
+  active      Boolean   @default(true)
+  autoPublish Boolean   @default(true)
+  lastPolled  DateTime?
+  createdAt   DateTime  @default(now())
+}
+
 model NewsArticle {
   id          String    @id @default(cuid())
   title       String

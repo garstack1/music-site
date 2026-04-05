@@ -33,6 +33,9 @@ export default function AdminLayout({
                 <Link href="/admin/feeds" className="text-dark-muted hover:text-dark-text text-xs transition-colors">
                   RSS Feeds
                 </Link>
+                <Link href="/admin/csv-sources" className="text-dark-muted hover:text-dark-text text-xs transition-colors">
+                  CSV Sources
+                </Link>
                 <Link href="/admin/moderation" className="text-dark-muted hover:text-dark-text text-xs transition-colors">
                   Moderation
                 </Link>
