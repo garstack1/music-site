@@ -30,6 +30,7 @@ interface Event {
   featured: boolean;
   latitude: number | null;
   longitude: number | null;
+  createdAt: string;
 }
 
 function formatTime(time: string | null): string | null {
@@ -73,6 +74,52 @@ function ShareButtons({ event }: { event: Event }) {
         <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 10.8c-1.087-2.114-4.046-6.053-6.798-7.995C2.566.944 1.561 1.266.902 1.565.139 1.908 0 3.08 0 3.768c0 .69.378 5.65.624 6.479.785 2.627 3.6 3.476 6.158 3.181-4.515.538-8.183 2.354-4.91 8.572.018.019 1.81-4.578 7.128-4.578h2c5.318 0 7.11 4.597 7.128 4.578 3.273-6.218-.395-8.034-4.91-8.572 2.558.295 5.374-.554 6.158-3.181.246-.828.624-5.789.624-6.479 0-.688-.139-1.86-.902-2.203-.659-.3-1.664-.62-4.3 1.24C12.046 4.747 9.087 8.686 12 10.8z"/></svg>
       </a>
     </div>
+  );
+}
+
+function JustAnnouncedSection({ events }: { events: Event[] }) {
+  const [tab, setTab] = useState<"concerts" | "festivals">("concerts");
+  const concerts = events.filter((e) => e.type === "CONCERT");
+  const festivals = events.filter((e) => e.type === "FESTIVAL");
+  const displayed = (tab === "concerts" ? concerts : festivals).slice(0, 20);
+
+  if (concerts.length === 0 && festivals.length === 0) return null;
+
+  return (
+    <section className="bg-light-surface border-b border-light-border">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="flex items-center gap-6 mb-4">
+          <h2 className="text-xl font-bold"><span className="text-brand">Just Announced</span></h2>
+          <div className="flex gap-3">
+            {concerts.length > 0 && (
+              <button
+                onClick={() => setTab("concerts")}
+                className={`text-sm pb-1 transition-colors ${
+                  tab === "concerts" ? "text-light-text border-b-2 border-brand" : "text-light-muted hover:text-light-text"
+                }`}
+              >
+                Concerts ({concerts.length})
+              </button>
+            )}
+            {festivals.length > 0 && (
+              <button
+                onClick={() => setTab("festivals")}
+                className={`text-sm pb-1 transition-colors ${
+                  tab === "festivals" ? "text-light-text border-b-2 border-brand" : "text-light-muted hover:text-light-text"
+                }`}
+              >
+                Festivals ({festivals.length})
+              </button>
+            )}
+          </div>
+        </div>
+        {displayed.length > 0 ? (
+          <Carousel events={displayed} />
+        ) : (
+          <p className="text-light-muted text-sm">No {tab} just announced.</p>
+        )}
+      </div>
+    </section>
   );
 }
 
@@ -241,6 +288,13 @@ export default function EventsPage() {
   const featuredEvents = useMemo(() => events.filter((e) => e.featured).slice(0, 10), [events]);
   const thisWeekEvents = useMemo(() => events.filter((e) => new Date(e.date) >= now && new Date(e.date) <= nextWeek), [events]);
 
+  const tenDaysAgo = new Date(now.getTime() - 10 * 24 * 60 * 60 * 1000);
+  const justAddedEvents = useMemo(
+    () => events.filter((e) => new Date(e.createdAt) >= tenDaysAgo)
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()),
+    [events]
+  );
+
   const months = useMemo(() => {
     const m = new Set<string>();
     events.forEach((e) => {
@@ -390,6 +444,10 @@ export default function EventsPage() {
                 <Carousel events={featuredEvents} />
               </div>
             </section>
+          )}
+
+          {justAddedEvents.length > 0 && !hasActiveFilters && (
+            <JustAnnouncedSection events={justAddedEvents} />
           )}
 
           {thisWeekEvents.length > 0 && !hasActiveFilters && (
