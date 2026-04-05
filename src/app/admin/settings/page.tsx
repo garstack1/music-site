@@ -53,6 +53,11 @@ export default function AdminSettingsPage() {
       label: "Stats Section",
       description: "Show site statistics (events, artists, cities, ticket clicks) on the homepage",
     },
+    {
+      key: "competitions_enabled",
+      label: "Competitions",
+      description: "Show competitions section on the site and allow subscribers to enter",
+    },
   ];
 
   return (

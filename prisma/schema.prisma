@@ -22,6 +22,8 @@ model User {
   updatedAt     DateTime       @updatedAt
   publicReviews PublicReview[]
   savedEvents   SavedEvent[]
+  competitionWins    Competition[]      @relation("CompetitionWinner")
+  competitionEntries CompetitionEntry[]
 }
 
 enum UserRole {
@@ -171,6 +173,45 @@ model TicketClick {
 }
 
 
+// ============================================
+// COMPETITIONS
+// ============================================
+model Competition {
+  id              String             @id @default(cuid())
+  title           String
+  slug            String             @unique
+  description     String
+  prize           String
+  prizeType       String             @default("TICKETS")
+  imageUrl        String?
+  rules           String?
+  startDate       DateTime
+  endDate         DateTime
+  maxEntries      Int?
+  active          Boolean            @default(true)
+  winnerId        String?
+  winner          User?              @relation("CompetitionWinner", fields: [winnerId], references: [id])
+  winnerPhoto     String?
+  winnerComment   String?
+  prizeReleased   Boolean            @default(false)
+  drawnAt         DateTime?
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+  entries         CompetitionEntry[]
+  @@index([startDate])
+  @@index([endDate])
+}
+
+model CompetitionEntry {
+  id              String      @id @default(cuid())
+  competition     Competition @relation(fields: [competitionId], references: [id], onDelete: Cascade)
+  competitionId   String
+  user            User        @relation(fields: [userId], references: [id])
+  userId          String
+  agreedToTerms   Boolean     @default(true)
+  createdAt       DateTime    @default(now())
+  @@unique([competitionId, userId])
+}
 
 // ============================================
 // REVIEWS (Admin concert reviews)

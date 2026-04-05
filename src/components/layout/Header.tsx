@@ -31,6 +31,9 @@ export default function Header() {
             <Link href="/reviews" className="text-dark-muted hover:text-dark-text transition-colors text-sm tracking-wide">
               Reviews
             </Link>
+            <Link href="/competitions" className="text-dark-muted hover:text-dark-text transition-colors text-sm tracking-wide">
+              Competitions
+            </Link>
             <Link href="/search" className="text-dark-muted hover:text-dark-text transition-colors text-sm tracking-wide">
               Search
             </Link>
@@ -117,6 +120,9 @@ export default function Header() {
             </Link>
             <Link href="/reviews" className="text-dark-muted hover:text-dark-text text-sm tracking-wide" onClick={() => setMobileMenuOpen(false)}>
               Reviews
+            </Link>
+            <Link href="/competitions" className="text-dark-muted hover:text-dark-text text-sm tracking-wide" onClick={() => setMobileMenuOpen(false)}>
+              Competitions
             </Link>
             <Link href="/search" className="text-dark-muted hover:text-dark-text text-sm tracking-wide" onClick={() => setMobileMenuOpen(false)}>
               Search

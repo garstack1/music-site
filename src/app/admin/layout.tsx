@@ -40,6 +40,9 @@ export default function AdminLayout({
                   Moderation
                 </Link>
                 <Link href="/admin/settings" className="text-dark-muted hover:text-dark-text text-xs transition-colors">
+                </Link>
+                <Link href="/admin/competitions" className="text-dark-muted hover:text-dark-text text-xs transition-colors">
+                  Competitions
                   Settings
                 </Link>
               </nav>
