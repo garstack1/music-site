@@ -135,6 +135,7 @@ model Event {
   longitude     Float?
   active        Boolean     @default(true)
   featured      Boolean     @default(false)
+  subscriberOnly Boolean     @default(false)
   ticketClicks  TicketClick[]
   savedEvents   SavedEvent[]
   createdAt     DateTime    @default(now())

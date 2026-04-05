@@ -5,6 +5,7 @@ import SaveEventButton from "@/components/events/SaveEventButton";
 import TicketButton from "@/components/events/TicketButton";
 import EventCalendar from "@/components/events/EventCalendar";
 import dynamic from "next/dynamic";
+import { useAuth } from "@/contexts/AuthContext";
 
 const EventMap = dynamic(() => import("@/components/events/EventMap"), { ssr: false });
 
@@ -30,6 +31,7 @@ interface Event {
   featured: boolean;
   latitude: number | null;
   longitude: number | null;
+  subscriberOnly: boolean;
   createdAt: string;
   artistWebsite: string | null;
   artistFacebook: string | null;
@@ -218,6 +220,7 @@ function EventCard({ event }: { event: Event }) {
           <div className="absolute top-2 right-2"><SaveEventButton eventId={event.id} /></div>
           <div className="absolute top-2 left-2">
             <span className={`text-xs font-medium px-2 py-0.5 rounded ${event.type === "FESTIVAL" ? "bg-purple-600 text-white" : "bg-blue-600 text-white"}`}>{event.type}</span>
+            {event.subscriberOnly && <span className="text-xs font-medium px-2 py-0.5 rounded bg-amber-500 text-white ml-1">Exclusive</span>}
           </div>
         </div>
       <div className="p-4 flex-1 flex flex-col">
@@ -290,6 +293,7 @@ export default function EventsPage() {
   const [selectedCity, setSelectedCity] = useState("all");
   const [selectedTab, setSelectedTab] = useState("all");
   const [view, setView] = useState<"cards" | "calendar" | "map">("cards");
+  const { user } = useAuth();
 
   useEffect(() => {
     fetch("/api/events")
@@ -311,6 +315,11 @@ export default function EventsPage() {
   const thisWeekEvents = useMemo(() => events.filter((e) => new Date(e.date) >= now && new Date(e.date) <= nextWeek), [events]);
 
   const tenDaysAgo = new Date(now.getTime() - 10 * 24 * 60 * 60 * 1000);
+  const exclusiveCount = useMemo(
+    () => events.filter((e) => e.subscriberOnly).length,
+    [events]
+  );
+
   const justAddedEvents = useMemo(
     () => events.filter((e) => new Date(e.createdAt) >= tenDaysAgo)
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()),
@@ -337,9 +346,10 @@ export default function EventsPage() {
         if (m !== selectedMonth) return false;
       }
       if (selectedCity !== "all" && e.city !== selectedCity) return false;
+      if (e.subscriberOnly && !user) return false;
       return true;
     });
-  }, [events, selectedTab, selectedGenre, selectedMonth, selectedCity]);
+  }, [events, selectedTab, selectedGenre, selectedMonth, selectedCity, user]);
 
   const groupedByMonth = useMemo(() => {
     const groups: Record<string, Event[]> = {};
@@ -444,6 +454,19 @@ export default function EventsPage() {
           </div>
         </div>
       </section>
+
+      {!user && exclusiveCount > 0 && (
+        <section className="bg-dark-bg border-b border-dark-border">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
+            <p className="text-dark-muted text-sm">
+              <span className="text-amber-400 font-medium">{exclusiveCount} exclusive event{exclusiveCount === 1 ? "" : "s"}</span> available for members only
+            </p>
+            <a href="/login" className="text-brand hover:text-brand-hover text-sm font-medium transition-colors">
+              Sign up free to see them
+            </a>
+          </div>
+        </section>
+      )}
 
       {view === "map" ? (
         <section className="bg-light-bg">

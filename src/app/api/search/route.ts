@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { getSession } from "@/lib/auth";
 
 export async function GET(request: NextRequest) {
   const query = request.nextUrl.searchParams.get("q")?.trim();
@@ -7,6 +8,8 @@ export async function GET(request: NextRequest) {
   if (!query || query.length < 2) {
     return NextResponse.json({ news: [], events: [], reviews: [] });
   }
+
+  const session = await getSession();
 
   const searchTerms = query.split(/\s+/).filter(Boolean);
   const containsAll = searchTerms.map((term) => ({
@@ -51,6 +54,7 @@ export async function GET(request: NextRequest) {
     prisma.event.findMany({
       where: {
         active: true,
+        ...(session ? {} : { subscriberOnly: false }),
         AND: eventContainsAll,
       },
       orderBy: { date: "asc" },

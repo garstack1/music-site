@@ -17,6 +17,7 @@ interface Event {
   source: string;
   active: boolean;
   featured: boolean;
+  subscriberOnly: boolean;
 }
 
 interface ImportResult {
@@ -29,7 +30,7 @@ interface ImportResult {
   errors: string[];
 }
 
-type SortField = "name" | "type" | "location" | "date" | "source" | "featured" | "active";
+type SortField = "name" | "type" | "location" | "date" | "source" | "featured" | "subscriberOnly" | "active";
 type SortDir = "asc" | "desc";
 
 export default function AdminEventsPage() {
@@ -99,6 +100,9 @@ export default function AdminEventsPage() {
         case "featured":
           cmp = (a.featured ? 1 : 0) - (b.featured ? 1 : 0);
           break;
+        case "subscriberOnly":
+          cmp = (a.subscriberOnly ? 1 : 0) - (b.subscriberOnly ? 1 : 0);
+          break;
         case "active":
           cmp = (a.active ? 1 : 0) - (b.active ? 1 : 0);
           break;
@@ -109,7 +113,7 @@ export default function AdminEventsPage() {
     return result;
   }, [events, search, sortField, sortDir]);
 
-  async function handleToggle(id: string, field: "active" | "featured", current: boolean) {
+  async function handleToggle(id: string, field: "active" | "featured" | "subscriberOnly", current: boolean) {
     try {
       await fetch(`/api/admin/events/${id}`, {
         method: "PATCH",
@@ -296,6 +300,7 @@ export default function AdminEventsPage() {
                 <th className="text-center px-4 py-3"><SortHeader field="date" label="Date" /></th>
                 <th className="text-center px-4 py-3 hidden md:table-cell"><SortHeader field="source" label="Source" /></th>
                 <th className="text-center px-4 py-3"><SortHeader field="featured" label="Featured" /></th>
+                <th className="text-center px-4 py-3 hidden md:table-cell"><SortHeader field="subscriberOnly" label="Exclusive" /></th>
                 <th className="text-center px-4 py-3"><SortHeader field="active" label="Status" /></th>
                 <th className="text-right text-dark-muted text-xs font-medium px-4 py-3">Actions</th>
               </tr>
@@ -334,6 +339,14 @@ export default function AdminEventsPage() {
                         event.featured ? "bg-amber-900/30 text-amber-400" : "bg-dark-card text-dark-muted"
                       }`}
                     >{event.featured ? "Featured" : "Normal"}</button>
+                  </td>
+                  <td className="px-4 py-3 text-center hidden md:table-cell">
+                    <button
+                      onClick={() => handleToggle(event.id, "subscriberOnly", event.subscriberOnly)}
+                      className={`inline-block text-xs font-medium px-2 py-0.5 rounded ${
+                        event.subscriberOnly ? "bg-purple-900/30 text-purple-400" : "bg-dark-card text-dark-muted"
+                      }`}
+                    >{event.subscriberOnly ? "Exclusive" : "Public"}</button>
                   </td>
                   <td className="px-4 py-3 text-center">
                     <button
