@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo, useRef } from "react";
 import SaveEventButton from "@/components/events/SaveEventButton";
+import EventCalendar from "@/components/events/EventCalendar";
 
 interface Event {
   id: string;
@@ -84,8 +85,7 @@ function Carousel({ events }: { events: Event[] }) {
   function scroll(dir: "left" | "right") {
     const el = scrollRef.current;
     if (!el) return;
-    const amount = el.clientWidth * 0.8;
-    el.scrollBy({ left: dir === "left" ? -amount : amount, behavior: "smooth" });
+    el.scrollBy({ left: dir === "left" ? -el.clientWidth * 0.8 : el.clientWidth * 0.8, behavior: "smooth" });
   }
 
   useEffect(() => {
@@ -98,30 +98,16 @@ function Carousel({ events }: { events: Event[] }) {
   return (
     <div className="relative">
       {canScrollLeft && (
-        <button
-          onClick={() => scroll("left")}
-          className="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white/90 border border-light-border shadow-md rounded-full w-10 h-10 flex items-center justify-center hover:bg-brand hover:text-white hover:border-brand transition-colors -ml-3"
-        >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-          </svg>
+        <button onClick={() => scroll("left")} className="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white/90 border border-light-border shadow-md rounded-full w-10 h-10 flex items-center justify-center hover:bg-brand hover:text-white hover:border-brand transition-colors -ml-3">
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
         </button>
       )}
       {canScrollRight && (
-        <button
-          onClick={() => scroll("right")}
-          className="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white/90 border border-light-border shadow-md rounded-full w-10 h-10 flex items-center justify-center hover:bg-brand hover:text-white hover:border-brand transition-colors -mr-3"
-        >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-          </svg>
+        <button onClick={() => scroll("right")} className="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white/90 border border-light-border shadow-md rounded-full w-10 h-10 flex items-center justify-center hover:bg-brand hover:text-white hover:border-brand transition-colors -mr-3">
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
         </button>
       )}
-      <div
-        ref={scrollRef}
-        className="flex gap-4 overflow-x-auto scrollbar-hide snap-x snap-mandatory pb-2"
-        style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
-      >
+      <div ref={scrollRef} className="flex gap-4 overflow-x-auto snap-x snap-mandatory pb-2" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
         {events.map((event) => (
           <div key={event.id} className="snap-start shrink-0 w-[calc(33.333%-11px)] min-w-[280px]">
             <EventCard event={event} />
@@ -132,47 +118,23 @@ function Carousel({ events }: { events: Event[] }) {
   );
 }
 
-function MonthGroup({
-  month,
-  events,
-  defaultOpen,
-}: {
-  month: string;
-  events: Event[];
-  defaultOpen: boolean;
-}) {
+function MonthGroup({ month, events, defaultOpen }: { month: string; events: Event[]; defaultOpen: boolean }) {
   const [open, setOpen] = useState(defaultOpen);
   const [y, m] = month.split("-");
-  const label = new Date(parseInt(y), parseInt(m) - 1).toLocaleDateString("en-IE", {
-    month: "long",
-    year: "numeric",
-  });
+  const label = new Date(parseInt(y), parseInt(m) - 1).toLocaleDateString("en-IE", { month: "long", year: "numeric" });
 
   return (
     <div className="mb-6">
-      <button
-        onClick={() => setOpen(!open)}
-        className="flex items-center gap-3 w-full text-left mb-4 group"
-      >
-        <svg
-          className={`w-4 h-4 text-brand transition-transform ${open ? "rotate-90" : ""}`}
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-          strokeWidth={2}
-        >
+      <button onClick={() => setOpen(!open)} className="flex items-center gap-3 w-full text-left mb-4 group">
+        <svg className={`w-4 h-4 text-brand transition-transform ${open ? "rotate-90" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
         </svg>
-        <h3 className="text-lg font-bold group-hover:text-brand transition-colors">
-          {label}
-        </h3>
+        <h3 className="text-lg font-bold group-hover:text-brand transition-colors">{label}</h3>
         <span className="text-light-muted text-sm">({events.length})</span>
       </button>
       {open && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {events.map((event) => (
-            <EventCard key={event.id} event={event} />
-          ))}
+          {events.map((event) => <EventCard key={event.id} event={event} />)}
         </div>
       )}
     </div>
@@ -188,54 +150,34 @@ function EventCard({ event }: { event: Event }) {
       {event.imageUrl && (
         <div className="aspect-video bg-light-surface overflow-hidden relative">
           <img src={event.imageUrl} alt={event.name} className="w-full h-full object-cover" />
-          <div className="absolute top-2 right-2">
-            <SaveEventButton eventId={event.id} />
-          </div>
+          <div className="absolute top-2 right-2"><SaveEventButton eventId={event.id} /></div>
           <div className="absolute top-2 left-2">
-            <span className={`text-xs font-medium px-2 py-0.5 rounded ${
-              event.type === "FESTIVAL" ? "bg-purple-600 text-white" : "bg-blue-600 text-white"
-            }`}>{event.type}</span>
+            <span className={`text-xs font-medium px-2 py-0.5 rounded ${event.type === "FESTIVAL" ? "bg-purple-600 text-white" : "bg-blue-600 text-white"}`}>{event.type}</span>
           </div>
         </div>
       )}
       <div className="p-4 flex-1 flex flex-col">
         <h3 className="font-bold text-lg leading-tight">{event.name}</h3>
-        {event.artist && event.artist !== event.name && (
-          <p className="text-light-muted text-sm mt-1">{event.artist}</p>
-        )}
-        {event.description && (
-          <p className="text-light-muted text-sm mt-2 line-clamp-2">{event.description}</p>
-        )}
+        {event.artist && event.artist !== event.name && <p className="text-light-muted text-sm mt-1">{event.artist}</p>}
+        {event.description && <p className="text-light-muted text-sm mt-2 line-clamp-2">{event.description}</p>}
         <div className="mt-3 space-y-1.5 text-sm">
           <div className="flex items-center gap-2">
-            <svg className="w-4 h-4 text-brand shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
+            <svg className="w-4 h-4 text-brand shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
             <span>
               {new Date(event.date).toLocaleDateString("en-IE", { weekday: "short", day: "numeric", month: "short", year: "numeric" })}
-              {event.endDate && (
-                <span className="text-light-muted">
-                  {" \u2014 "}
-                  {new Date(event.endDate).toLocaleDateString("en-IE", { day: "numeric", month: "short" })}
-                </span>
-              )}
+              {event.endDate && <span className="text-light-muted">{" \u2014 "}{new Date(event.endDate).toLocaleDateString("en-IE", { day: "numeric", month: "short" })}</span>}
               {time && <span className="text-light-muted"> at {time}</span>}
             </span>
           </div>
           {(event.venue || event.city) && (
             <div className="flex items-center gap-2">
-              <svg className="w-4 h-4 text-brand shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-              </svg>
+              <svg className="w-4 h-4 text-brand shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
               <span className="text-light-muted">{[event.venue, event.city, event.country].filter(Boolean).join(", ")}</span>
             </div>
           )}
           {price && (
             <div className="flex items-center gap-2">
-              <svg className="w-4 h-4 text-brand shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
+              <svg className="w-4 h-4 text-brand shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
               <span className="text-light-muted">{price}</span>
             </div>
           )}
@@ -268,6 +210,7 @@ export default function EventsPage() {
   const [selectedMonth, setSelectedMonth] = useState("all");
   const [selectedCity, setSelectedCity] = useState("all");
   const [selectedTab, setSelectedTab] = useState("all");
+  const [view, setView] = useState<"cards" | "calendar">("cards");
 
   useEffect(() => {
     fetch("/api/events")
@@ -285,15 +228,8 @@ export default function EventsPage() {
   const nextWeek = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
   const currentMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
 
-  const featuredEvents = useMemo(
-    () => events.filter((e) => e.featured).slice(0, 10),
-    [events]
-  );
-
-  const thisWeekEvents = useMemo(
-    () => events.filter((e) => new Date(e.date) >= now && new Date(e.date) <= nextWeek),
-    [events]
-  );
+  const featuredEvents = useMemo(() => events.filter((e) => e.featured).slice(0, 10), [events]);
+  const thisWeekEvents = useMemo(() => events.filter((e) => new Date(e.date) >= now && new Date(e.date) <= nextWeek), [events]);
 
   const months = useMemo(() => {
     const m = new Set<string>();
@@ -345,11 +281,35 @@ export default function EventsPage() {
 
   return (
     <>
-      {/* Hero + Filters */}
       <section className="bg-dark-bg">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <h1 className="text-dark-text text-3xl md:text-4xl font-bold">Events</h1>
-          <p className="text-dark-muted mt-2">Upcoming concerts and festivals across Ireland, the UK and Europe.</p>
+          <div className="flex items-start justify-between">
+            <div>
+              <h1 className="text-dark-text text-3xl md:text-4xl font-bold">Events</h1>
+              <p className="text-dark-muted mt-2">Upcoming concerts and festivals across Ireland, the UK and Europe.</p>
+            </div>
+            {/* View Toggle */}
+            <div className="flex bg-dark-surface border border-dark-border rounded overflow-hidden">
+              <button
+                onClick={() => setView("cards")}
+                className={`px-3 py-2 text-sm transition-colors ${view === "cards" ? "bg-brand text-white" : "text-dark-muted hover:text-dark-text"}`}
+                title="Card View"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                </svg>
+              </button>
+              <button
+                onClick={() => setView("calendar")}
+                className={`px-3 py-2 text-sm transition-colors ${view === "calendar" ? "bg-brand text-white" : "text-dark-muted hover:text-dark-text"}`}
+                title="Calendar View"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+              </button>
+            </div>
+          </div>
 
           <div className="flex gap-4 mt-6 mb-6">
             {[
@@ -357,13 +317,9 @@ export default function EventsPage() {
               { key: "concerts", label: `Concerts (${events.filter((e) => e.type === "CONCERT").length})` },
               { key: "festivals", label: `Festivals (${events.filter((e) => e.type === "FESTIVAL").length})` },
             ].map((tab) => (
-              <button
-                key={tab.key}
-                onClick={() => setSelectedTab(tab.key)}
-                className={`text-sm pb-2 transition-colors ${
-                  selectedTab === tab.key ? "text-dark-text border-b-2 border-brand" : "text-dark-muted hover:text-dark-text"
-                }`}
-              >{tab.label}</button>
+              <button key={tab.key} onClick={() => setSelectedTab(tab.key)} className={`text-sm pb-2 transition-colors ${selectedTab === tab.key ? "text-dark-text border-b-2 border-brand" : "text-dark-muted hover:text-dark-text"}`}>
+                {tab.label}
+              </button>
             ))}
           </div>
 
@@ -387,57 +343,51 @@ export default function EventsPage() {
               </select>
             )}
             {hasActiveFilters && (
-              <button onClick={() => { setSelectedGenre("all"); setSelectedMonth("all"); setSelectedCity("all"); }} className="text-brand hover:text-brand-hover text-sm transition-colors">
-                Clear filters
-              </button>
+              <button onClick={() => { setSelectedGenre("all"); setSelectedMonth("all"); setSelectedCity("all"); }} className="text-brand hover:text-brand-hover text-sm transition-colors">Clear filters</button>
             )}
           </div>
         </div>
       </section>
 
-      {/* Featured Events */}
-      {featuredEvents.length > 0 && !hasActiveFilters && (
-        <section className="bg-light-surface border-b border-light-border">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <h2 className="text-xl font-bold mb-4">
-              <span className="text-brand">Featured</span> Events
-            </h2>
-            <Carousel events={featuredEvents} />
+      {view === "calendar" ? (
+        <section className="bg-light-bg">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+            <EventCalendar events={filtered} />
           </div>
         </section>
-      )}
-
-      {/* This Week */}
-      {thisWeekEvents.length > 0 && !hasActiveFilters && (
-        <section className="bg-light-bg border-b border-light-border">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <h2 className="text-xl font-bold mb-4">
-              <span className="text-brand">This Week</span> ({thisWeekEvents.length})
-            </h2>
-            <Carousel events={thisWeekEvents} />
-          </div>
-        </section>
-      )}
-
-      {/* All Events by Month */}
-      <section className="bg-light-bg">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          {filtered.length === 0 ? (
-            <div className="text-center py-12">
-              <p className="text-light-muted">No events match your filters.</p>
-            </div>
-          ) : (
-            groupedByMonth.map(([month, monthEvents]) => (
-              <MonthGroup
-                key={month}
-                month={month}
-                events={monthEvents}
-                defaultOpen={month === currentMonthKey || hasActiveFilters}
-              />
-            ))
+      ) : (
+        <>
+          {featuredEvents.length > 0 && !hasActiveFilters && (
+            <section className="bg-light-surface border-b border-light-border">
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                <h2 className="text-xl font-bold mb-4"><span className="text-brand">Featured</span> Events</h2>
+                <Carousel events={featuredEvents} />
+              </div>
+            </section>
           )}
-        </div>
-      </section>
+
+          {thisWeekEvents.length > 0 && !hasActiveFilters && (
+            <section className="bg-light-bg border-b border-light-border">
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                <h2 className="text-xl font-bold mb-4"><span className="text-brand">This Week</span> ({thisWeekEvents.length})</h2>
+                <Carousel events={thisWeekEvents} />
+              </div>
+            </section>
+          )}
+
+          <section className="bg-light-bg">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+              {filtered.length === 0 ? (
+                <div className="text-center py-12"><p className="text-light-muted">No events match your filters.</p></div>
+              ) : (
+                groupedByMonth.map(([month, monthEvents]) => (
+                  <MonthGroup key={month} month={month} events={monthEvents} defaultOpen={month === currentMonthKey || hasActiveFilters} />
+                ))
+              )}
+            </div>
+          </section>
+        </>
+      )}
     </>
   );
 }
