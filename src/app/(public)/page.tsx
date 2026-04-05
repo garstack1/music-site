@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db";
+import StatsSection from "@/components/home/StatsSection";
 import Link from "next/link";
 
 async function getFeaturedNews() {
@@ -265,6 +266,9 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* Stats Section */}
+      <StatsSection />
     </>
   );
 }

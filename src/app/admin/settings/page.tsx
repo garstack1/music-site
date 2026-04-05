@@ -48,6 +48,11 @@ export default function AdminSettingsPage() {
       label: "Public Reviews",
       description: "Allow users to submit reviews and ratings on concert reviews",
     },
+    {
+      key: "stats_section_enabled",
+      label: "Stats Section",
+      description: "Show site statistics (events, artists, cities, ticket clicks) on the homepage",
+    },
   ];
 
   return (

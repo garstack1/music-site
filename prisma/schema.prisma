@@ -115,6 +115,7 @@ model Event {
   longitude     Float?
   active        Boolean     @default(true)
   featured      Boolean     @default(false)
+  ticketClicks  TicketClick[]
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
 
@@ -134,6 +135,20 @@ enum EventSource {
   CSV
   MANUAL
 }
+
+// ============================================
+// TICKETS (Clicks)
+// ============================================
+model TicketClick {
+  id        String   @id @default(cuid())
+  eventId   String
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  @@index([eventId])
+  @@index([createdAt])
+}
+
+
 
 // ============================================
 // REVIEWS (Admin concert reviews)

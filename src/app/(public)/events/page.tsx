@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo, useRef } from "react";
 import SaveEventButton from "@/components/events/SaveEventButton";
+import TicketButton from "@/components/events/TicketButton";
 import EventCalendar from "@/components/events/EventCalendar";
 import dynamic from "next/dynamic";
 
@@ -112,9 +113,9 @@ function Carousel({ events }: { events: Event[] }) {
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
         </button>
       )}
-      <div ref={scrollRef} className="flex gap-4 overflow-x-auto snap-x snap-mandatory pb-2" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
+      <div ref={scrollRef} className="flex gap-4 overflow-x-auto snap-x snap-mandatory pb-2 items-stretch" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
         {events.map((event) => (
-          <div key={event.id} className="snap-start shrink-0 w-[calc(33.333%-11px)] min-w-[280px]">
+          <div key={event.id} className="snap-start shrink-0 w-[calc(33.333%-11px)] min-w-[280px] flex">
             <EventCard event={event} />
           </div>
         ))}
@@ -138,7 +139,7 @@ function MonthGroup({ month, events, defaultOpen }: { month: string; events: Eve
         <span className="text-light-muted text-sm">({events.length})</span>
       </button>
       {open && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 auto-rows-fr">
           {events.map((event) => <EventCard key={event.id} event={event} />)}
         </div>
       )}
@@ -151,16 +152,20 @@ function EventCard({ event }: { event: Event }) {
   const time = formatTime(event.startTime);
 
   return (
-    <div className="bg-white border border-light-border hover:border-brand transition-colors overflow-hidden flex flex-col">
-      {event.imageUrl && (
-        <div className="aspect-video bg-light-surface overflow-hidden relative">
-          <img src={event.imageUrl} alt={event.name} className="w-full h-full object-cover" />
+    <div className="bg-white border border-light-border hover:border-brand transition-colors overflow-hidden flex flex-col w-full">
+      <div className="aspect-video bg-light-surface overflow-hidden relative">
+          {event.imageUrl ? (
+            <img src={event.imageUrl} alt={event.name} className="w-full h-full object-cover" />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center bg-dark-surface">
+              <span className="text-dark-muted text-4xl">♪</span>
+            </div>
+          )}
           <div className="absolute top-2 right-2"><SaveEventButton eventId={event.id} /></div>
           <div className="absolute top-2 left-2">
             <span className={`text-xs font-medium px-2 py-0.5 rounded ${event.type === "FESTIVAL" ? "bg-purple-600 text-white" : "bg-blue-600 text-white"}`}>{event.type}</span>
           </div>
         </div>
-      )}
       <div className="p-4 flex-1 flex flex-col">
         <h3 className="font-bold text-lg leading-tight">{event.name}</h3>
         {event.artist && event.artist !== event.name && <p className="text-light-muted text-sm mt-1">{event.artist}</p>}
