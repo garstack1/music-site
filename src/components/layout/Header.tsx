@@ -1,9 +1,13 @@
 "use client";
+
 import Link from "next/link";
 import { useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const { user, loading, logout } = useAuth();
 
   return (
     <header className="bg-dark-bg border-b border-dark-border sticky top-0 z-50">
@@ -35,6 +39,56 @@ export default function Header() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
               </svg>
             </Link>
+
+            {/* Auth */}
+            {loading ? (
+              <div className="w-8 h-8" />
+            ) : user ? (
+              <div className="relative">
+                <button
+                  onClick={() => setUserMenuOpen(!userMenuOpen)}
+                  className="flex items-center gap-2 text-dark-muted hover:text-dark-text transition-colors"
+                >
+                  <div className="w-8 h-8 bg-brand rounded-full flex items-center justify-center text-white text-xs font-bold">
+                    {(user.name || user.email).charAt(0).toUpperCase()}
+                  </div>
+                </button>
+                {userMenuOpen && (
+                  <>
+                    <div className="fixed inset-0 z-40" onClick={() => setUserMenuOpen(false)} />
+                    <div className="absolute right-0 top-12 bg-dark-surface border border-dark-border rounded shadow-lg z-50 w-56">
+                      <div className="px-4 py-3 border-b border-dark-border">
+                        <p className="text-dark-text text-sm font-medium truncate">{user.name || "User"}</p>
+                        <p className="text-dark-muted text-xs truncate">{user.email}</p>
+                      </div>
+                      <Link
+                        href="/saved"
+                        className="block px-4 py-2.5 text-dark-muted hover:text-dark-text hover:bg-dark-bg text-sm transition-colors"
+                        onClick={() => setUserMenuOpen(false)}
+                      >
+                        Saved Events
+                      </Link>
+                      <button
+                        onClick={() => {
+                          setUserMenuOpen(false);
+                          logout();
+                        }}
+                        className="block w-full text-left px-4 py-2.5 text-dark-muted hover:text-brand hover:bg-dark-bg text-sm transition-colors border-t border-dark-border"
+                      >
+                        Sign out
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
+            ) : (
+              <Link
+                href="/login"
+                className="text-dark-muted hover:text-dark-text transition-colors text-sm tracking-wide"
+              >
+                Sign in
+              </Link>
+            )}
           </nav>
 
           {/* Mobile menu button */}
@@ -73,6 +127,26 @@ export default function Header() {
               </svg>
               Saved Events
             </Link>
+            {!loading && (
+              user ? (
+                <>
+                  <div className="border-t border-dark-border pt-4">
+                    <p className="text-dark-text text-sm font-medium">{user.name || "User"}</p>
+                    <p className="text-dark-muted text-xs">{user.email}</p>
+                  </div>
+                  <button
+                    onClick={() => { setMobileMenuOpen(false); logout(); }}
+                    className="text-dark-muted hover:text-brand text-sm tracking-wide text-left"
+                  >
+                    Sign out
+                  </button>
+                </>
+              ) : (
+                <Link href="/login" className="text-brand hover:text-brand-hover text-sm font-medium tracking-wide" onClick={() => setMobileMenuOpen(false)}>
+                  Sign in / Register
+                </Link>
+              )
+            )}
           </nav>
         )}
       </div>

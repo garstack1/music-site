@@ -21,12 +21,25 @@ model User {
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
   publicReviews PublicReview[]
+  savedEvents   SavedEvent[]
 }
 
 enum UserRole {
   ADMIN
   PUBLIC
 }
+
+model SavedEvent {
+  id        String   @id @default(cuid())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  eventId   String
+  createdAt DateTime @default(now())
+  @@unique([userId, eventId])
+  @@index([userId])
+}
+
 
 // ============================================
 // NEWS
@@ -116,6 +129,7 @@ model Event {
   active        Boolean     @default(true)
   featured      Boolean     @default(false)
   ticketClicks  TicketClick[]
+  savedEvents   SavedEvent[]
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
 
