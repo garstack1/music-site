@@ -49,13 +49,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const feedData: any = { 
+      name, 
+      url, 
+      active: true 
+    };
+    
+    // Only add sourceLabel if it's provided
+    if (sourceLabel) {
+      feedData.sourceLabel = sourceLabel;
+    }
+
     const feed = await prisma.rssFeed.create({
-      data: { 
-        name, 
-        url, 
-        sourceLabel: sourceLabel || null,
-        active: true 
-      },
+      data: feedData,
     });
 
     return NextResponse.json({ feed }, { status: 201 });

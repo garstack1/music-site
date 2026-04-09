@@ -33,16 +33,22 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "This sender already exists" }, { status: 409 });
     }
 
+    const senderData: any = {
+      name,
+      email: email.toLowerCase(),
+      startMarker: startMarker || "",
+      endMarker: endMarker || "",
+      gmailLabel: gmailLabel || null,
+      autoPublish: autoPublish || false,
+    };
+    
+    // Only add sourceLabel if it's provided
+    if (sourceLabel) {
+      senderData.sourceLabel = sourceLabel;
+    }
+
     const sender = await prisma.approvedSender.create({
-      data: {
-        name,
-        email: email.toLowerCase(),
-        startMarker: startMarker || "",
-        endMarker: endMarker || "",
-        sourceLabel: sourceLabel || null,
-        gmailLabel: gmailLabel || null,
-        autoPublish: autoPublish || false,
-      },
+      data: senderData,
     });
 
     return NextResponse.json({ sender }, { status: 201 });
