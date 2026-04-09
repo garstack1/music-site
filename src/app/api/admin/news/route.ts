@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const { title, summary, body, sourceUrl, imageUrl, featured, genreIds } =
+    const { title, summary, body, sourceUrl, imageUrl, featured, sourceLabel, genreIds } =
       await request.json();
 
     if (!title || !sourceUrl) {
@@ -69,6 +69,7 @@ export async function POST(request: NextRequest) {
         summary: summary || null,
         body: body || null,
         sourceUrl,
+        sourceLabel: sourceLabel || null,
         imageUrl: imageUrl || null,
         featured: featured || false,
         manual: true,

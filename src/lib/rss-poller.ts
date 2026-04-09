@@ -241,6 +241,7 @@ export async function pollFeed(feedId: string): Promise<PollResult> {
             featured: false,
             hidden: false,
             manual: false,
+            sourceLabel: `via ${feed.name}`,  // Custom source label from RSS feed name
             publishedAt,
             rssFeedId: feed.id,
           },

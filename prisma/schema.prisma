@@ -101,6 +101,7 @@ model NewsArticle {
   slug        String    @unique
   summary     String?
   sourceUrl   String    @unique
+  sourceLabel String?   // Custom label for the source (e.g., "via NME", "Press Release", "Email Submission")
   imageUrl    String?
   featured    Boolean   @default(false)
   hidden      Boolean   @default(false)

@@ -346,6 +346,7 @@ export async function checkEmails(): Promise<EmailImportResult> {
                 featured: false,
                 hidden: !sender.autoPublish,
                 manual: true,
+                sourceLabel: `${sender.name} (Email)`,  // Custom source label from sender name
                 publishedAt: new Date(),
               },
             });
