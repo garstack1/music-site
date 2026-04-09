@@ -63,10 +63,38 @@ export default async function ArticlePage({
             </p>
           )}
           {article.body && (
-            <div className="prose max-w-none">
-              {article.body.split("\n\n").map((para, i) => (
-                <p key={i} className="text-light-text leading-relaxed mb-4">{para}</p>
-              ))}
+            <div className="prose prose-invert max-w-none">
+              {article.body.split("\n").map((line, i) => {
+                // Skip empty lines but preserve them visually
+                if (!line.trim()) {
+                  return <div key={i} className="h-2" />;
+                }
+                
+                // Check if line is part of a list
+                if (line.trim().startsWith("•")) {
+                  return (
+                    <div key={i} className="flex gap-3 text-light-text leading-relaxed mb-2">
+                      <span className="text-brand">•</span>
+                      <span>{line.substring(1).trim()}</span>
+                    </div>
+                  );
+                }
+                
+                // Check if line looks like a bold heading (common in press releases)
+                if (line === line.toUpperCase() && line.length > 5 && line.length < 100) {
+                  return (
+                    <h3 key={i} className="text-lg font-bold text-light-text mt-4 mb-2">
+                      {line}
+                    </h3>
+                  );
+                }
+                
+                return (
+                  <p key={i} className="text-light-text leading-relaxed mb-4">
+                    {line}
+                  </p>
+                );
+              })}
             </div>
           )}
           {article.sourceUrl && article.sourceUrl !== "https://example.com" && (

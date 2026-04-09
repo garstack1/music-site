@@ -76,6 +76,40 @@ function extractVideos(text: string): string[] {
   return videos;
 }
 
+function decodeHtmlEntities(str: string): string {
+  // HTML entity map for common special characters
+  const entities: Record<string, string> = {
+    "&nbsp;": " ",
+    "&amp;": "&",
+    "&lt;": "<",
+    "&gt;": ">",
+    "&quot;": '"',
+    "&apos;": "'",
+    "&rsquo;": "\u2019",
+    "&lsquo;": "\u2018",
+    "&rdquo;": "\u201D",
+    "&ldquo;": "\u201C",
+    "&mdash;": "\u2014",
+    "&ndash;": "\u2013",
+    "&hellip;": "\u2026",
+    "&bull;": "•",
+    "&copy;": "©",
+    "&reg;": "®",
+    "&trade;": "™",
+  };
+
+  let decoded = str;
+  for (const [entity, char] of Object.entries(entities)) {
+    decoded = decoded.replace(new RegExp(entity, "g"), char);
+  }
+
+  // Handle numeric entities
+  decoded = decoded.replace(/&#x([0-9a-fA-F]+);/g, (_, hex) => String.fromCharCode(parseInt(hex, 16)));
+  decoded = decoded.replace(/&#([0-9]+);/g, (_, dec) => String.fromCharCode(parseInt(dec, 10)));
+
+  return decoded;
+}
+
 function stripHtml(html: string): string {
   return html
     .replace(/<br\s*\/?>/gi, "\n")
@@ -219,14 +253,24 @@ export async function checkEmails(): Promise<EmailImportResult> {
             const source = msg.source?.toString() || "";
             let bodyText = "";
 
+            // Check for charset encoding
+            const charsetMatch = source.match(/Content-Type: (?:text\/html|text\/plain)[\s\S]*?charset="?([^"\s;]+)"?/i);
+            const charset = charsetMatch ? charsetMatch[1].toUpperCase() : "UTF-8";
+
             const textMatch = source.match(/Content-Type: text\/plain[\s\S]*?\r\n\r\n([\s\S]*?)(?=\r\n--|\r\n\.\r\n|$)/i);
             const htmlMatch = source.match(/Content-Type: text\/html[\s\S]*?\r\n\r\n([\s\S]*?)(?=\r\n--|\r\n\.\r\n|$)/i);
 
             if (textMatch) {
               bodyText = textMatch[1];
+              // Handle quoted-printable encoding
               bodyText = bodyText.replace(/=\r\n/g, "").replace(/=([0-9A-F]{2})/gi, (_, hex) => String.fromCharCode(parseInt(hex, 16)));
+              // Decode HTML entities
+              bodyText = decodeHtmlEntities(bodyText);
             } else if (htmlMatch) {
-              bodyText = stripHtml(htmlMatch[1]);
+              let htmlContent = htmlMatch[1];
+              // Handle quoted-printable encoding in HTML
+              htmlContent = htmlContent.replace(/=\r\n/g, "").replace(/=([0-9A-F]{2})/gi, (_, hex) => String.fromCharCode(parseInt(hex, 16)));
+              bodyText = stripHtml(htmlContent);
             } else {
               const headerEnd = source.indexOf("\r\n\r\n");
               if (headerEnd !== -1) {
