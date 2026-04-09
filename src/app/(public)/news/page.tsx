@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 
 interface NewsArticle {
@@ -126,13 +126,16 @@ export default function NewsPage() {
   const [articles, setArticles] = useState<NewsArticle[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useMemo(() => {
+  useEffect(() => {
     fetch("/api/admin/news")
       .then((r) => r.json())
       .then((data) => {
-        setArticles(data || []);
+        setArticles(Array.isArray(data) ? data : []);
       })
-      .catch(() => {})
+      .catch((err) => {
+        console.error("Failed to load news:", err);
+        setArticles([]);
+      })
       .finally(() => setLoading(false));
   }, []);
 
