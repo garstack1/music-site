@@ -16,6 +16,7 @@ export default function NewArticlePage() {
   const [summary, setSummary] = useState("");
   const [body, setBody] = useState("");
   const [sourceUrl, setSourceUrl] = useState("");
+  const [sourceLabel, setSourceLabel] = useState("");
   const [imageUrl, setImageUrl] = useState("");
   const [featured, setFeatured] = useState(false);
   const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
@@ -49,6 +50,7 @@ export default function NewArticlePage() {
           summary,
           body,
           sourceUrl,
+          sourceLabel,
           imageUrl,
           featured,
           genreIds: selectedGenres,
@@ -116,6 +118,20 @@ export default function NewArticlePage() {
             required
             className="w-full px-3 py-2 bg-dark-bg border border-dark-border text-dark-text text-sm placeholder-dark-muted focus:outline-none focus:border-brand transition-colors"
             placeholder="https://example.com/article"
+          />
+        </div>
+
+        <div>
+          <label htmlFor="sourceLabel" className="block text-dark-muted text-xs mb-1.5">
+            Source Label <span className="text-dark-muted">(e.g., "via NME", "Press Release", "Email Submission")</span>
+          </label>
+          <input
+            id="sourceLabel"
+            type="text"
+            value={sourceLabel}
+            onChange={(e) => setSourceLabel(e.target.value)}
+            className="w-full px-3 py-2 bg-dark-bg border border-dark-border text-dark-text text-sm placeholder-dark-muted focus:outline-none focus:border-brand transition-colors"
+            placeholder="Leave empty for auto-generated label"
           />
         </div>
 
