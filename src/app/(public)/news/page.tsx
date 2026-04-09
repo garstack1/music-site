@@ -130,7 +130,9 @@ export default function NewsPage() {
     fetch("/api/admin/news")
       .then((r) => r.json())
       .then((data) => {
-        setArticles(Array.isArray(data) ? data : []);
+        // API returns { articles: [...] }
+        const newsArticles = data.articles || data || [];
+        setArticles(Array.isArray(newsArticles) ? newsArticles : []);
       })
       .catch((err) => {
         console.error("Failed to load news:", err);
