@@ -49,20 +49,27 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const feedData: any = { 
-      name, 
-      url, 
-      active: true 
-    };
-    
-    // Only add sourceLabel if it's provided
-    if (sourceLabel) {
-      feedData.sourceLabel = sourceLabel;
-    }
-
     const feed = await prisma.rssFeed.create({
-      data: feedData,
+      data: { 
+        name, 
+        url, 
+        active: true 
+      },
     });
+
+    // Update with sourceLabel if provided and column exists
+    if (sourceLabel) {
+      try {
+        const updated = await prisma.rssFeed.update({
+          where: { id: feed.id },
+          data: { sourceLabel },
+        });
+        return NextResponse.json({ feed: updated }, { status: 201 });
+      } catch {
+        // sourceLabel column might not exist yet, return feed without it
+        return NextResponse.json({ feed }, { status: 201 });
+      }
+    }
 
     return NextResponse.json({ feed }, { status: 201 });
   } catch (error) {

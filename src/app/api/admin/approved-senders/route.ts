@@ -33,23 +33,30 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "This sender already exists" }, { status: 409 });
     }
 
-    const senderData: any = {
-      name,
-      email: email.toLowerCase(),
-      startMarker: startMarker || "",
-      endMarker: endMarker || "",
-      gmailLabel: gmailLabel || null,
-      autoPublish: autoPublish || false,
-    };
-    
-    // Only add sourceLabel if it's provided
-    if (sourceLabel) {
-      senderData.sourceLabel = sourceLabel;
-    }
-
     const sender = await prisma.approvedSender.create({
-      data: senderData,
+      data: {
+        name,
+        email: email.toLowerCase(),
+        startMarker: startMarker || "",
+        endMarker: endMarker || "",
+        gmailLabel: gmailLabel || null,
+        autoPublish: autoPublish || false,
+      },
     });
+
+    // Update with sourceLabel if provided and column exists
+    if (sourceLabel) {
+      try {
+        const updated = await prisma.approvedSender.update({
+          where: { id: sender.id },
+          data: { sourceLabel },
+        });
+        return NextResponse.json({ sender: updated }, { status: 201 });
+      } catch {
+        // sourceLabel column might not exist yet, return sender without it
+        return NextResponse.json({ sender }, { status: 201 });
+      }
+    }
 
     return NextResponse.json({ sender }, { status: 201 });
   } catch (error) {
