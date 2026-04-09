@@ -21,7 +21,6 @@ export default function EditArticlePage({
   const [summary, setSummary] = useState("");
   const [body, setBody] = useState("");
   const [sourceUrl, setSourceUrl] = useState("");
-  const [sourceLabel, setSourceLabel] = useState("");
   const [imageUrl, setImageUrl] = useState("");
   const [featured, setFeatured] = useState(false);
   const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
@@ -41,7 +40,6 @@ export default function EditArticlePage({
           setSummary(a.summary || "");
           setBody(a.body || "");
           setSourceUrl(a.sourceUrl);
-          setSourceLabel(a.sourceLabel || "");
           setImageUrl(a.imageUrl || "");
           setFeatured(a.featured);
           setSelectedGenres(a.tags.map((t: { genre: Genre }) => t.genre.id));
@@ -72,7 +70,6 @@ export default function EditArticlePage({
           summary: summary || null,
           body: body || null,
           sourceUrl,
-          sourceLabel: sourceLabel || null,
           imageUrl: imageUrl || null,
           featured,
           genreIds: selectedGenres,
@@ -147,20 +144,6 @@ export default function EditArticlePage({
             onChange={(e) => setSourceUrl(e.target.value)}
             required
             className="w-full px-3 py-2 bg-dark-bg border border-dark-border text-dark-text text-sm placeholder-dark-muted focus:outline-none focus:border-brand transition-colors"
-          />
-        </div>
-
-        <div>
-          <label htmlFor="sourceLabel" className="block text-dark-muted text-xs mb-1.5">
-            Source Label <span className="text-dark-muted">(e.g., "via NME", "Press Release", "Email Submission")</span>
-          </label>
-          <input
-            id="sourceLabel"
-            type="text"
-            value={sourceLabel}
-            onChange={(e) => setSourceLabel(e.target.value)}
-            className="w-full px-3 py-2 bg-dark-bg border border-dark-border text-dark-text text-sm placeholder-dark-muted focus:outline-none focus:border-brand transition-colors"
-            placeholder="Leave empty for auto-generated label"
           />
         </div>
 

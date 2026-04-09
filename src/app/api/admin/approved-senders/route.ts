@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const { name, email, startMarker, endMarker, gmailLabel, autoPublish } = await request.json();
+    const { name, email, startMarker, endMarker, sourceLabel, gmailLabel, autoPublish } = await request.json();
 
     if (!name || !email) {
       return NextResponse.json({ error: "Name and email are required" }, { status: 400 });
@@ -39,6 +39,7 @@ export async function POST(request: NextRequest) {
         email: email.toLowerCase(),
         startMarker: startMarker || "",
         endMarker: endMarker || "",
+        sourceLabel: sourceLabel || null,
         gmailLabel: gmailLabel || null,
         autoPublish: autoPublish || false,
       },

@@ -8,6 +8,7 @@ interface Sender {
   email: string;
   startMarker: string;
   endMarker: string;
+  sourceLabel: string | null;
   gmailLabel: string | null;
   active: boolean;
   autoPublish: boolean;
@@ -32,6 +33,7 @@ export default function EmailMonitorPage() {
   const [email, setEmail] = useState("");
   const [startMarker, setStartMarker] = useState("");
   const [endMarker, setEndMarker] = useState("");
+  const [sourceLabel, setSourceLabel] = useState("");
   const [gmailLabel, setGmailLabel] = useState("");
   const [autoPublish, setAutoPublish] = useState(false);
   const [adding, setAdding] = useState(false);
@@ -68,6 +70,7 @@ export default function EmailMonitorPage() {
           email,
           startMarker: startMarker || "",
           endMarker: endMarker || "",
+          sourceLabel: sourceLabel || null,
           gmailLabel: gmailLabel || null,
           autoPublish,
         }),
@@ -75,7 +78,7 @@ export default function EmailMonitorPage() {
       const data = await res.json();
       if (!res.ok) { setError(data.error || "Failed to add"); setAdding(false); return; }
 
-      setName(""); setEmail(""); setStartMarker(""); setEndMarker(""); setGmailLabel(""); setAutoPublish(false);
+      setName(""); setEmail(""); setStartMarker(""); setEndMarker(""); setSourceLabel(""); setGmailLabel(""); setAutoPublish(false);
       setShowForm(false);
       fetchSenders();
     } catch {
@@ -233,6 +236,15 @@ export default function EmailMonitorPage() {
                 <input type="text" value={endMarker} onChange={(e) => setEndMarker(e.target.value)}
                   placeholder="e.g. ****** or leave blank"
                   className="w-full px-3 py-2 bg-dark-bg border border-dark-border text-dark-text text-sm font-mono placeholder-dark-muted focus:outline-none focus:border-brand transition-colors" />
+              </div>
+
+              <div>
+                <label className="block text-dark-muted text-xs mb-1.5">
+                  Source Label <span className="text-dark-muted">(e.g., "Press Release", "Official Statement")</span>
+                </label>
+                <input type="text" value={sourceLabel} onChange={(e) => setSourceLabel(e.target.value)}
+                  placeholder="Leave empty to auto-generate from sender name"
+                  className="w-full px-3 py-2 bg-dark-bg border border-dark-border text-dark-text text-sm placeholder-dark-muted focus:outline-none focus:border-brand transition-colors" />
               </div>
             </div>
 

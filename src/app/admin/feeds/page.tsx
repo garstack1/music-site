@@ -6,6 +6,7 @@ interface RssFeed {
   id: string;
   name: string;
   url: string;
+  sourceLabel?: string;
   active: boolean;
   lastPolled: string | null;
   createdAt: string;
@@ -24,6 +25,7 @@ export default function AdminFeedsPage() {
   const [loading, setLoading] = useState(true);
   const [name, setName] = useState("");
   const [url, setUrl] = useState("");
+  const [sourceLabel, setSourceLabel] = useState("");
   const [adding, setAdding] = useState(false);
   const [error, setError] = useState("");
   const [showForm, setShowForm] = useState(false);
@@ -55,7 +57,7 @@ export default function AdminFeedsPage() {
       const res = await fetch("/api/admin/feeds", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, url }),
+        body: JSON.stringify({ name, url, sourceLabel }),
       });
 
       const data = await res.json();
@@ -68,6 +70,7 @@ export default function AdminFeedsPage() {
 
       setName("");
       setUrl("");
+      setSourceLabel("");
       setShowForm(false);
       fetchFeeds();
     } catch {
@@ -237,6 +240,20 @@ export default function AdminFeedsPage() {
                 onChange={(e) => setUrl(e.target.value)}
                 required
                 placeholder="https://pitchfork.com/rss/reviews/albums/"
+                className="w-full px-3 py-2 bg-dark-bg border border-dark-border text-dark-text text-sm placeholder-dark-muted focus:outline-none focus:border-brand transition-colors"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="sourceLabel" className="block text-dark-muted text-xs mb-1.5">
+                Source Label <span className="text-dark-muted">(e.g., "via Pitchfork")</span>
+              </label>
+              <input
+                id="sourceLabel"
+                type="text"
+                value={sourceLabel}
+                onChange={(e) => setSourceLabel(e.target.value)}
+                placeholder="Leave empty to auto-generate from feed name"
                 className="w-full px-3 py-2 bg-dark-bg border border-dark-border text-dark-text text-sm placeholder-dark-muted focus:outline-none focus:border-brand transition-colors"
               />
             </div>

@@ -54,6 +54,7 @@ model ApprovedSender {
   email       String   @unique
   startMarker String   @default("===")
   endMarker   String   @default("******")
+  sourceLabel String?  // Custom label for articles from this sender
   gmailLabel  String?
   active      Boolean  @default(true)
   autoPublish Boolean  @default(false)
@@ -76,6 +77,7 @@ model RssFeed {
   id          String        @id @default(cuid())
   name        String
   url         String        @unique
+  sourceLabel String?       // Custom label for articles from this feed (e.g., "via NME")
   active      Boolean       @default(true)
   lastPolled  DateTime?
   createdAt   DateTime      @default(now())

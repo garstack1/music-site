@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const { name, url } = await request.json();
+    const { name, url, sourceLabel } = await request.json();
 
     if (!name || !url) {
       return NextResponse.json(
@@ -50,7 +50,12 @@ export async function POST(request: NextRequest) {
     }
 
     const feed = await prisma.rssFeed.create({
-      data: { name, url, active: true },
+      data: { 
+        name, 
+        url, 
+        sourceLabel: sourceLabel || null,
+        active: true 
+      },
     });
 
     return NextResponse.json({ feed }, { status: 201 });
