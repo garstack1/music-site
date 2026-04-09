@@ -127,12 +127,12 @@ export default function NewsPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("/api/admin/news")
+    fetch("/api/news")
       .then((r) => r.json())
       .then((data) => {
-        // API returns { articles: [...] }
-        const newsArticles = data.articles || data || [];
-        setArticles(Array.isArray(newsArticles) ? newsArticles : []);
+        // API returns array directly
+        const newsArticles = Array.isArray(data) ? data : [];
+        setArticles(newsArticles);
       })
       .catch((err) => {
         console.error("Failed to load news:", err);
