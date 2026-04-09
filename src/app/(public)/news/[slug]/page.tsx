@@ -2,6 +2,55 @@ import { prisma } from "@/lib/db";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+// Convert URLs in text to clickable links
+function LinkifyText({ text }: { text: string }) {
+  // Pattern to match URLs in angle brackets or plain URLs
+  const urlPattern = /(<(https?:\/\/[^\s<>"]+)>)|(https?:\/\/[^\s<>"\)]+)/g;
+  
+  const parts = text.split(urlPattern);
+  
+  return (
+    <>
+      {parts.map((part, i) => {
+        // Skip undefined or empty parts
+        if (!part) return null;
+        
+        // Check if this is a URL (captured group 2 is the URL inside angle brackets, group 3 is plain URL)
+        if (part.startsWith("http://") || part.startsWith("https://")) {
+          // Remove trailing punctuation like ) or . if appropriate
+          let url = part;
+          let trailing = "";
+          
+          // Keep trailing ) if it looks like it's part of the URL
+          if (part.endsWith(")") && !part.includes("(")) {
+            url = part.slice(0, -1);
+            trailing = ")";
+          } else if (part.endsWith(".") && !part.match(/\.\w+$/)) {
+            url = part.slice(0, -1);
+            trailing = ".";
+          }
+          
+          return (
+            <span key={i}>
+              <a
+                href={url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-brand hover:text-brand-hover underline"
+              >
+                {url}
+              </a>
+              {trailing}
+            </span>
+          );
+        }
+        
+        return <span key={i}>{part}</span>;
+      })}
+    </>
+  );
+}
+
 async function getArticle(slug: string) {
   return prisma.newsArticle.findUnique({
     where: { slug },
@@ -75,7 +124,7 @@ export default async function ArticlePage({
                   return (
                     <div key={i} className="flex gap-3 text-light-text leading-relaxed mb-2">
                       <span className="text-brand">•</span>
-                      <span>{line.substring(1).trim()}</span>
+                      <span><LinkifyText text={line.substring(1).trim()} /></span>
                     </div>
                   );
                 }
@@ -84,14 +133,14 @@ export default async function ArticlePage({
                 if (line === line.toUpperCase() && line.length > 5 && line.length < 100) {
                   return (
                     <h3 key={i} className="text-lg font-bold text-light-text mt-4 mb-2">
-                      {line}
+                      <LinkifyText text={line} />
                     </h3>
                   );
                 }
                 
                 return (
                   <p key={i} className="text-light-text leading-relaxed mb-4">
-                    {line}
+                    <LinkifyText text={line} />
                   </p>
                 );
               })}

@@ -54,11 +54,20 @@ function extractSummary(content: string): string {
 
 function extractImages(text: string): string[] {
   const images: string[] = [];
-  const imgRegex = /https?:\/\/[^\s<>"]+\.(jpg|jpeg|png|gif|webp)(\?[^\s<>"]*)?/gi;
+  
+  // Match image URLs with common extensions and formats
+  const imgRegex = /https?:\/\/[^\s<>"]+\.(jpg|jpeg|png|gif|webp|svg)(\?[^\s<>"]*)?/gi;
   let match;
   while ((match = imgRegex.exec(text)) !== null) {
     if (!images.includes(match[0])) images.push(match[0]);
   }
+  
+  // Also extract URLs in angle brackets like <https://example.com/image.jpg>
+  const angleBracketRegex = /<(https?:\/\/[^\s<>"]+\.(jpg|jpeg|png|gif|webp|svg))>/gi;
+  while ((match = angleBracketRegex.exec(text)) !== null) {
+    if (!images.includes(match[1])) images.push(match[1]);
+  }
+  
   return images;
 }
 
@@ -304,7 +313,12 @@ export async function checkEmails(): Promise<EmailImportResult> {
             const videos = extractVideos(bodyText);
             const featuredImage = images.length > 0 ? images[0] : null;
 
-            let body = content;
+            // Clean up URLs in content - remove angle brackets but keep the URLs
+            let cleanedBody = content
+              .replace(/<(https?:\/\/[^\s<>"]+)>/g, "$1")  // Remove angle brackets around URLs
+              .replace(/\s*\/\s*/g, " / ");  // Clean up slash spacing
+            
+            let body = cleanedBody;
             if (videos.length > 0) {
               body += "\n\n---\n\n";
               videos.forEach((url) => {
