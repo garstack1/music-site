@@ -43,8 +43,33 @@ model SavedEvent {
 }
 
 
+
+
 // ============================================
-// NEWS
+// EMAIL MONITORING FOR PR EMAILS
+// ============================================
+model ApprovedSender {
+  id          String   @id @default(cuid())
+  name        String
+  email       String   @unique
+  startMarker String   @default("===")
+  endMarker   String   @default("******")
+  gmailLabel  String?
+  active      Boolean  @default(true)
+  autoPublish Boolean  @default(false)
+  createdAt   DateTime @default(now())
+}
+
+model ProcessedEmail {
+  id        String   @id @default(cuid())
+  messageId String   @unique
+  sender    String
+  subject   String?
+  createdAt DateTime @default(now())
+}
+
+// ============================================
+// NEWS - RSS FEEDS
 // ============================================
 
 model RssFeed {

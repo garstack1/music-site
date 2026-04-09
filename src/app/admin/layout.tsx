@@ -24,6 +24,12 @@ export default function AdminLayout({
                 <Link href="/admin/news" className="text-dark-muted hover:text-dark-text text-xs transition-colors">
                   News
                 </Link>
+                <Link href="/admin/import-email" className="text-dark-muted hover:text-dark-text text-xs transition-colors">
+                  PR Import
+                </Link>
+                <Link href="/admin/email-monitor" className="text-dark-muted hover:text-dark-text text-xs transition-colors">
+                  Email Monitor
+                </Link>
                 <Link href="/admin/events" className="text-dark-muted hover:text-dark-text text-xs transition-colors">
                   Events
                 </Link>
