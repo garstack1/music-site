@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo, useRef } from "react";
 import SaveEventButton from "@/components/events/SaveEventButton";
 import TicketButton from "@/components/events/TicketButton";
 import EventCalendar from "@/components/events/EventCalendar";
-import LargerFeaturedCarousel from "@/components/LargerFeaturedCarousel";
+import TallFeaturedCarousel from "@/components/TallFeaturedCarousel";
 import dynamic from "next/dynamic";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -399,6 +399,17 @@ export default function EventsPage() {
 
   return (
     <>
+      {/* Featured Events Section - at top */}
+      {featuredEvents.length > 0 && (
+        <section className="bg-dark-bg w-full">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+            <h2 className="text-white text-xl font-bold mb-6">Featured Events</h2>
+            <TallFeaturedCarousel events={featuredEvents} />
+          </div>
+        </section>
+      )}
+
+      {/* Header Section */}
       <section className="bg-dark-bg">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <div className="flex items-start justify-between">
@@ -504,24 +515,6 @@ export default function EventsPage() {
         </section>
       ) : (
         <>
-          {featuredEvents.length > 0 && !hasActiveFilters && (
-            <section className="bg-dark-bg w-full">
-              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-                <h2 className="text-light-text text-xl font-bold mb-6">Featured Events</h2>
-                <LargerFeaturedCarousel
-                  items={featuredEvents.map((event) => ({
-                    id: event.id,
-                    type: "event" as const,
-                    title: event.name,
-                    slug: event.id,
-                    imageUrl: event.imageUrl,
-                    date: event.date instanceof Date ? event.date.toISOString() : event.date,
-                  }))}
-                />
-              </div>
-            </section>
-          )}
-
           {justAddedEvents.length > 0 && !hasActiveFilters && (
             <JustAnnouncedSection events={justAddedEvents} />
           )}
