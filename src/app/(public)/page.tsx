@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/db";
 import StatsSection from "@/components/home/StatsSection";
-import HomeFeaturedCarousel from "@/components/HomeFeaturedSlider";
+import HomeFeaturedCarousel from "@/components/HomeFeaturedCarousel";
 import Link from "next/link";
 
 async function getFeaturedNewsAndEvents() {
