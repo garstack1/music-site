@@ -207,18 +207,11 @@ export default function NewsPage() {
 
   return (
     <>
-      <section className="bg-dark-bg">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <h1 className="text-dark-text text-3xl md:text-4xl font-bold">News</h1>
-          <p className="text-dark-muted mt-2">Latest music news, announcements and updates.</p>
-        </div>
-      </section>
-
       {/* Featured News Carousel Section */}
       {featured.length > 0 && (
         <section className="bg-dark-bg w-full">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-            <h2 className="text-light-text text-xl font-bold mb-6">Featured News</h2>
+            <h2 className="text-white text-xl font-bold mb-6">Featured News</h2>
             <HomeFeaturedCarousel 
               items={featured.slice(0, 10).map(article => ({
                 id: article.id,
