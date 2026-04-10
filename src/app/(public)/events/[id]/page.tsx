@@ -8,15 +8,6 @@ export const revalidate = 60; // Revalidate every 60 seconds
 async function getEventDetails(id: string) {
   return prisma.event.findUnique({
     where: { id },
-    include: {
-      tickets: {
-        select: {
-          url: true,
-          name: true,
-        },
-        take: 5,
-      },
-    },
   });
 }
 
