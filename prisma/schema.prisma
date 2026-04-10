@@ -245,6 +245,7 @@ enum EventSource {
   TICKETMASTER
   CSV
   MANUAL
+  WEB_SCRAPE
 }
 
 // ============================================
@@ -375,4 +376,21 @@ model SiteSetting {
   id    String @id @default(cuid())
   key   String @unique
   value String
+}
+
+// ============================================
+// FESTIVAL SEARCH / WEB SCRAPING
+// ============================================
+
+model FestivalSearch {
+  id            String    @id @default(cuid())
+  name          String                  // Friendly name for this search
+  searchQuery   String                  // The search query (e.g., "Ireland festivals 2026")
+  region        String?                 // Optional: europe, ireland, uk, etc.
+  genre         String?                 // Optional: rock, electronic, etc.
+  active        Boolean   @default(true)
+  lastSearched  DateTime?
+  resultsCount  Int?                    // Number of results from last search
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 }
