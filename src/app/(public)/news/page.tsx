@@ -70,8 +70,9 @@ function NewsCard({ article }: { article: NewsArticle }) {
   }
 
   return (
-    <Link href={`/news/${article.slug}`}>
-      <div className="bg-white border border-light-border hover:border-brand transition-colors overflow-hidden flex flex-col h-full cursor-pointer group relative">
+    <div className="bg-white border border-light-border hover:border-brand transition-colors overflow-hidden flex flex-col h-full relative group">
+      {/* Main card content - clickable link */}
+      <Link href={`/news/${article.slug}`} className="flex-1 flex flex-col">
         <div className="aspect-video bg-light-surface overflow-hidden relative">
           {article.imageUrl ? (
             <img src={article.imageUrl} alt={article.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
@@ -108,12 +109,14 @@ function NewsCard({ article }: { article: NewsArticle }) {
               })}
             </div>
           </div>
-          <div className="mt-auto pt-4">
-            <ShareButtons article={article} />
-          </div>
         </div>
+      </Link>
+      
+      {/* Share buttons - separate from link to avoid nested anchors */}
+      <div className="p-4 border-t border-light-border">
+        <ShareButtons article={article} />
       </div>
-    </Link>
+    </div>
   );
 }
 
