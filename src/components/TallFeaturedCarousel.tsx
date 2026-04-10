@@ -167,7 +167,7 @@ export default function TallFeaturedCarousel({ events }: TallFeaturedCarouselPro
 
                 {/* Get Tickets Button */}
                 <Link
-                  href="/events"
+                  href={`/events/${event.id}`}
                   className="w-full bg-brand hover:bg-brand-hover text-white text-xs font-semibold py-2 px-3 rounded text-center transition-colors mb-2"
                 >
                   Get Tickets

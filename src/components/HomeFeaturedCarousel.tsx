@@ -67,7 +67,7 @@ export default function HomeFeaturedCarousel({ items }: HomeFeaturedCarouselProp
     if (item.type === "news") {
       return `/news/${item.slug}`;
     } else {
-      return `/events`;
+      return `/events/${item.slug}`;
     }
   };
 
