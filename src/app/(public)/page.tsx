@@ -1,13 +1,48 @@
 import { prisma } from "@/lib/db";
 import StatsSection from "@/components/home/StatsSection";
+import HomeFeaturedSlider from "@/components/HomeFeaturedSlider";
 import Link from "next/link";
 
-async function getFeaturedNews() {
-  return prisma.newsArticle.findMany({
+async function getFeaturedNewsAndEvents() {
+  // Get featured news
+  const featuredNews = await prisma.newsArticle.findMany({
     where: { featured: true, hidden: false },
     orderBy: { publishedAt: "desc" },
-    take: 2,
+    take: 15,
   });
+
+  // Get featured events
+  const featuredEvents = await prisma.event.findMany({
+    where: { featured: true, active: true },
+    orderBy: { date: "asc" },
+    take: 15,
+  });
+
+  // Mix and sort by date (most recent first), limit to 15 total
+  const mixed = [
+    ...featuredNews.map(n => ({
+      id: n.id,
+      type: "news" as const,
+      title: n.title,
+      slug: n.slug,
+      imageUrl: n.imageUrl,
+      date: n.publishedAt.toISOString(),
+      summary: n.summary,
+    })),
+    ...featuredEvents.map(e => ({
+      id: e.id,
+      type: "event" as const,
+      title: e.name,
+      slug: e.id,
+      imageUrl: e.imageUrl,
+      date: e.date.toISOString(),
+      summary: undefined,
+    })),
+  ]
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+    .slice(0, 15);
+
+  return mixed;
 }
 
 async function getLatestNews() {
@@ -35,51 +70,21 @@ async function getLatestReviews() {
 }
 
 export default async function HomePage() {
-  const [featuredNews, latestNews, upcomingEvents, latestReviews] =
+  const [featuredMixed, latestNews, upcomingEvents, latestReviews] =
     await Promise.all([
-      getFeaturedNews(),
+      getFeaturedNewsAndEvents(),
       getLatestNews(),
       getUpcomingEvents(),
       getLatestReviews(),
     ]);
 
-  const heroArticle = featuredNews[0];
-  const secondFeatured = featuredNews[1];
-
   return (
     <>
-      {/* Hero Section - Dark */}
-      {heroArticle && (
+      {/* Featured News & Events Slider */}
+      {featuredMixed.length > 0 && (
         <section className="bg-dark-bg">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
-              <div>
-                <span className="text-brand text-xs font-medium tracking-widest uppercase">
-                  Featured
-                </span>
-                <h1 className="text-dark-text text-3xl md:text-4xl lg:text-5xl font-bold mt-3 leading-tight">
-                  {heroArticle.title}
-                </h1>
-                <p className="text-dark-muted mt-4 text-lg leading-relaxed">
-                  {heroArticle.summary}
-                </p>
-                <Link
-                  href={`/news/${heroArticle.slug}`}
-                  className="inline-block mt-6 bg-brand hover:bg-brand-hover text-white px-6 py-3 text-sm font-medium tracking-wide transition-colors"
-                >
-                  Read More
-                </Link>
-              </div>
-              {heroArticle.imageUrl && (
-                <div className="aspect-video bg-dark-card overflow-hidden">
-                  <img
-                    src={heroArticle.imageUrl}
-                    alt={heroArticle.title}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-              )}
-            </div>
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+            <HomeFeaturedSlider items={featuredMixed} />
           </div>
         </section>
       )}
@@ -98,32 +103,6 @@ export default async function HomePage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {/* Secondary featured - larger card */}
-            {secondFeatured && (
-              <div className="lg:col-span-1">
-                <Link href={`/news/${secondFeatured.slug}`} className="group block">
-                  {secondFeatured.imageUrl && (
-                    <div className="aspect-video bg-light-surface overflow-hidden mb-3">
-                      <img
-                        src={secondFeatured.imageUrl}
-                        alt={secondFeatured.title}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      />
-                    </div>
-                  )}
-                  <span className="text-brand text-xs font-medium tracking-widest uppercase">
-                    Featured
-                  </span>
-                  <h3 className="text-lg font-semibold mt-1 group-hover:text-brand transition-colors">
-                    {secondFeatured.title}
-                  </h3>
-                  <p className="text-light-muted text-sm mt-2 line-clamp-2">
-                    {secondFeatured.summary}
-                  </p>
-                </Link>
-              </div>
-            )}
-
             {/* Latest news cards */}
             {latestNews.map((article) => (
               <div key={article.id}>
