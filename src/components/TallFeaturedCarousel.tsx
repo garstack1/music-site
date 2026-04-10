@@ -198,7 +198,7 @@ export default function TallFeaturedCarousel({ events }: TallFeaturedCarouselPro
                     </svg>
                   </a>
                   <a
-                    href={`https://wa.me/?text=${encodeURIComponent(`Check out: ${event.name} - ${getShareUrl(event}`)}`}
+                    href={`https://wa.me/?text=${encodeURIComponent(`Check out: ${event.name} - ${getShareUrl(event)}`)}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-light-muted hover:text-[#25D366] transition-colors"
