@@ -205,11 +205,19 @@ function MonthGroup({ month, events, defaultOpen }: { month: string; events: Eve
 }
 
 function EventCard({ event }: { event: Event }) {
+  const { push } = require("next/navigation").useRouter ? require("next/navigation").useRouter() : { push: () => {} };
   const price = formatPrice(event);
   const time = formatTime(event.startTime);
 
   return (
-    <div className="bg-white border border-light-border hover:border-brand transition-colors overflow-hidden flex flex-col w-full">
+    <div 
+      onClick={() => {
+        if (typeof window !== 'undefined') {
+          window.location.href = `/events/${event.id}`;
+        }
+      }}
+      className="bg-white border border-light-border hover:border-brand transition-colors overflow-hidden flex flex-col w-full cursor-pointer"
+    >
       <div className="aspect-video bg-light-surface overflow-hidden relative">
           {event.imageUrl ? (
             <img src={event.imageUrl} alt={event.name} className="w-full h-full object-cover" />

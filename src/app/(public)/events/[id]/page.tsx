@@ -104,19 +104,17 @@ export default async function EventDetailPage({
                 <h3 className="text-lg font-bold mb-4">Event Details</h3>
 
                 {/* Date & Time */}
-                <div className="mb-4">
+                <div className="mb-4 pb-4 border-b border-light-border">
                   <p className="text-light-muted text-sm font-medium">Date & Time</p>
                   <p className="text-dark-text font-semibold">{formatDate(event.date)}</p>
                   <p className="text-dark-text">{formatTime(event.startTime)}</p>
                 </div>
 
                 {/* Type */}
-                {event.type && (
-                  <div className="mb-4 pb-4 border-b border-light-border">
-                    <p className="text-light-muted text-sm font-medium">Type</p>
-                    <p className="text-dark-text font-semibold capitalize">{event.type}</p>
-                  </div>
-                )}
+                <div className="mb-4 pb-4 border-b border-light-border">
+                  <p className="text-light-muted text-sm font-medium">Type</p>
+                  <p className="text-dark-text font-semibold capitalize">{event.type || "Event"}</p>
+                </div>
 
                 {/* Genre */}
                 {event.genre && (
@@ -188,7 +186,7 @@ export default async function EventDetailPage({
               {/* Back Button */}
               <Link
                 href="/events"
-                className="inline-block w-full text-center bg-light-surface hover:bg-light-border text-dark-text font-semibold py-2 px-4 rounded transition-colors"
+                className="inline-block w-full text-center bg-gray-400 hover:bg-gray-500 text-white font-semibold py-2 px-4 rounded transition-colors"
               >
                 ← Back to Events
               </Link>
@@ -199,7 +197,7 @@ export default async function EventDetailPage({
           {otherVenueEvents.length > 0 && (
             <div className="mt-16 pt-12 border-t border-light-border">
               <h2 className="text-dark-text text-2xl font-bold mb-6">
-                Other events at {event.venue}
+                Other events at {event.venue || "this venue"}
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {otherVenueEvents.map((venueEvent) => (
