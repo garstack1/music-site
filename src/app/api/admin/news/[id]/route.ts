@@ -46,7 +46,29 @@ export async function PATCH(
       return NextResponse.json({ error: "Article not found" }, { status: 404 });
     }
 
-    const { genreIds, ...updateData } = body;
+    const { genreIds, featured, ...updateData } = body;
+
+    // If marking as featured, enforce max 10 featured articles
+    if (featured === true && !article.featured) {
+      const featuredCount = await prisma.newsArticle.count({
+        where: { featured: true },
+      });
+
+      if (featuredCount >= 10) {
+        // Remove the oldest featured article
+        const oldest = await prisma.newsArticle.findFirst({
+          where: { featured: true },
+          orderBy: { updatedAt: "asc" },
+        });
+
+        if (oldest) {
+          await prisma.newsArticle.update({
+            where: { id: oldest.id },
+            data: { featured: false },
+          });
+        }
+      }
+    }
 
     if (genreIds !== undefined) {
       await prisma.articleTag.deleteMany({ where: { articleId: id } });
@@ -62,7 +84,7 @@ export async function PATCH(
 
     const updated = await prisma.newsArticle.update({
       where: { id },
-      data: updateData,
+      data: { ...updateData, featured },
       include: {
         tags: { include: { genre: true } },
       },

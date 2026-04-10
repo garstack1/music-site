@@ -39,6 +39,28 @@ export async function PATCH(
       return NextResponse.json({ error: "Event not found" }, { status: 404 });
     }
 
+    // If marking as featured, enforce max 10 featured events
+    if (body.featured === true && !event.featured) {
+      const featuredCount = await prisma.event.count({
+        where: { featured: true },
+      });
+
+      if (featuredCount >= 10) {
+        // Remove the oldest featured event
+        const oldest = await prisma.event.findFirst({
+          where: { featured: true },
+          orderBy: { updatedAt: "asc" },
+        });
+
+        if (oldest) {
+          await prisma.event.update({
+            where: { id: oldest.id },
+            data: { featured: false },
+          });
+        }
+      }
+    }
+
     const updateData: Record<string, unknown> = {};
     if (body.name !== undefined) updateData.name = body.name;
     if (body.type !== undefined) updateData.type = body.type;

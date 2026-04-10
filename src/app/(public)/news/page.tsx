@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
+import FeaturedSlider from "@/components/FeaturedSlider";
 
 interface NewsArticle {
   id: string;
@@ -215,16 +216,17 @@ export default function NewsPage() {
 
       <section className="bg-light-bg">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          {/* Featured Articles */}
+          {/* Featured Slider - limit to 10, oldest removed when adding 11th */}
           {featured.length > 0 && (
-            <div className="mb-12">
-              <h2 className="text-xl font-bold mb-6"><span className="text-brand">Featured</span> News</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 auto-rows-fr">
-                {featured.map((article) => (
-                  <NewsCard key={article.id} article={article} />
-                ))}
-              </div>
-            </div>
+            <FeaturedSlider 
+              items={featured.slice(0, 10).map(article => ({
+                id: article.id,
+                title: article.title,
+                slug: article.slug,
+                imageUrl: article.imageUrl,
+              }))}
+              type="news"
+            />
           )}
 
           {/* All Articles by Month */}
