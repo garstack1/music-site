@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import SaveEventButton from "@/components/events/SaveEventButton";
 
 interface FeaturedEvent {
   id: string;
@@ -126,7 +127,7 @@ export default function TallFeaturedCarousel({ events }: TallFeaturedCarouselPro
               className="bg-white border border-light-border hover:border-brand transition-colors overflow-hidden flex flex-col h-full w-full cursor-pointer"
             >
               {/* Image */}
-              <div className="aspect-video bg-light-surface overflow-hidden">
+              <div className="aspect-video bg-light-surface overflow-hidden relative">
                 {event.imageUrl ? (
                   <img
                     src={event.imageUrl}
@@ -138,6 +139,10 @@ export default function TallFeaturedCarousel({ events }: TallFeaturedCarouselPro
                     <span className="text-light-muted text-3xl">♪</span>
                   </div>
                 )}
+                {/* Save Button */}
+                <div className="absolute top-2 right-2">
+                  <SaveEventButton eventId={event.id} />
+                </div>
               </div>
 
               {/* Content */}

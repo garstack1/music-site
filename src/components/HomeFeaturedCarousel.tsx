@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
+import SaveEventButton from "@/components/events/SaveEventButton";
 
 interface FeaturedItem {
   id: string;
@@ -122,6 +123,13 @@ export default function HomeFeaturedCarousel({ items }: HomeFeaturedCarouselProp
                       {item.type === "news" ? "NEWS" : "EVENT"}
                     </span>
                   </div>
+
+                  {/* Save Button for Events */}
+                  {item.type === "event" && (
+                    <div className="absolute top-2 right-2">
+                      <SaveEventButton eventId={item.id} />
+                    </div>
+                  )}
                 </div>
 
                 <div className="p-3 flex-1 flex flex-col">
