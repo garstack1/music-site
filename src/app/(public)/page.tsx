@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/db";
 import StatsSection from "@/components/home/StatsSection";
-import HomeFeaturedSlider from "@/components/HomeFeaturedSlider";
+import HomeFeaturedCarousel from "@/components/HomeFeaturedSlider";
 import Link from "next/link";
 
 async function getFeaturedNewsAndEvents() {
@@ -80,11 +80,12 @@ export default async function HomePage() {
 
   return (
     <>
-      {/* Featured News & Events Slider */}
+      {/* Featured News & Events Carousel */}
       {featuredMixed.length > 0 && (
-        <section className="bg-dark-bg">
+        <section className="bg-light-bg">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-            <HomeFeaturedSlider items={featuredMixed} />
+            <h2 className="text-2xl font-bold mb-6">Featured</h2>
+            <HomeFeaturedCarousel items={featuredMixed} />
           </div>
         </section>
       )}
