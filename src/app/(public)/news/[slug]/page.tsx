@@ -12,71 +12,6 @@ function cleanSpecialCharacters(text: string): string {
     .replace(/…/g, "...");      // Ellipsis → three dots
 }
 
-// Convert URLs in text to clickable links
-function LinkifyText({ text }: { text: string }) {
-  // Fix URLs with spaces in them (e.g., "https: / / youtu.be / ...")
-  let cleanedText = text.replace(/(\bhttps?):(\s+)\/(\s+)\//g, "$1://");
-
-  // Pattern to match plain URLs
-  const plainUrlPattern = /https?:\/\/[^\s<>"]+/g;
-  
-  const parts: React.ReactNode[] = [];
-  let lastIndex = 0;
-  
-  // Find all plain URLs
-  let urlMatch;
-  const urlMatches: Array<{ match: string; index: number }> = [];
-  plainUrlPattern.lastIndex = 0;
-  while ((urlMatch = plainUrlPattern.exec(cleanedText)) !== null) {
-    urlMatches.push({
-      match: urlMatch[0],
-      index: urlMatch.index,
-    });
-  }
-  
-  // Build parts
-  urlMatches.forEach((match, i) => {
-    if (match.index > lastIndex) {
-      parts.push(cleanedText.substring(lastIndex, match.index));
-    }
-    
-    // Regular link
-    let url = match.match;
-    let trailing = "";
-    
-    if (url.endsWith(")") && !url.includes("(")) {
-      url = url.slice(0, -1);
-      trailing = ")";
-    } else if (url.endsWith(".") && !url.match(/\.\w+$/)) {
-      url = url.slice(0, -1);
-      trailing = ".";
-    }
-    
-    parts.push(
-      <span key={`link-${i}`}>
-        <a
-          href={url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-brand hover:text-brand-hover underline"
-        >
-          {url}
-        </a>
-        {trailing}
-      </span>
-    );
-    
-    lastIndex = match.index + match.match.length;
-  });
-  
-  // Add remaining text
-  if (lastIndex < cleanedText.length) {
-    parts.push(cleanedText.substring(lastIndex));
-  }
-  
-  return <>{parts}</>;
-}
-
 async function getArticle(slug: string) {
   return prisma.newsArticle.findUnique({
     where: { slug },
@@ -148,7 +83,7 @@ export default async function ArticlePage({
                   return <div key={i} className="h-2" />;
                 }
                 
-                // Check if line is a YouTube link
+                // Check if line is a YouTube link - render as embed
                 const youtubeMatch = cleanedLine.match(/(?:https?:\/\/)?(?:www\.)?(?:youtu\.be\/|youtube\.com\/watch\?v=)([a-zA-Z0-9_-]+)/);
                 if (youtubeMatch) {
                   return (
@@ -171,7 +106,7 @@ export default async function ArticlePage({
                   return (
                     <div key={i} className="flex gap-3 text-light-text leading-relaxed mb-2">
                       <span className="text-brand">•</span>
-                      <span><LinkifyText text={cleanedLine.substring(1).trim()} /></span>
+                      <span>{cleanedLine.substring(1).trim()}</span>
                     </div>
                   );
                 }
@@ -180,14 +115,14 @@ export default async function ArticlePage({
                 if (cleanedLine === cleanedLine.toUpperCase() && cleanedLine.length > 5 && cleanedLine.length < 100) {
                   return (
                     <h3 key={i} className="text-lg font-bold text-light-text mt-4 mb-2">
-                      <LinkifyText text={cleanedLine} />
+                      {cleanedLine}
                     </h3>
                   );
                 }
                 
                 return (
                   <p key={i} className="text-light-text leading-relaxed mb-4">
-                    <LinkifyText text={cleanedLine} />
+                    {cleanedLine}
                   </p>
                 );
               })}
