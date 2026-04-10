@@ -31,16 +31,34 @@ export default function EmailPreferencesPage() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [preferences, setPreferences] = useState<EmailPreferences | null>(null);
+  const [featureEnabled, setFeatureEnabled] = useState(true);
 
   useEffect(() => {
-    fetchPreferences();
+    checkFeatureAndFetchPreferences();
   }, []);
 
-  async function fetchPreferences() {
+  async function checkFeatureAndFetchPreferences() {
     try {
+      // First check if feature is enabled
+      const settingsRes = await fetch("/api/settings");
+      const settingsData = await settingsRes.json();
+      
+      if (settingsData.settings?.email_preferences_enabled !== "true") {
+        setFeatureEnabled(false);
+        setLoading(false);
+        return;
+      }
+
+      // Then fetch preferences
       const res = await fetch("/api/user/email-preferences");
       if (res.status === 401) {
         router.push("/login?redirect=/account/preferences");
+        return;
+      }
+      if (!res.ok) {
+        const data = await res.json();
+        setError(data.error || "Failed to load preferences");
+        setLoading(false);
         return;
       }
       const data = await res.json();
@@ -97,6 +115,25 @@ export default function EmailPreferencesPage() {
         <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <h1 className="text-gray-900 text-2xl font-bold mb-8">Email Preferences</h1>
           <p className="text-gray-600">Loading...</p>
+        </div>
+      </section>
+    );
+  }
+
+  if (!featureEnabled) {
+    return (
+      <section className="bg-light-bg min-h-screen">
+        <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <div className="bg-white border border-gray-200 rounded-lg p-8 text-center">
+            <div className="text-4xl mb-4">📧</div>
+            <h1 className="text-gray-900 text-2xl font-bold mb-4">Email Preferences</h1>
+            <p className="text-gray-600 mb-6">
+              Email subscriptions are not currently available. Check back later!
+            </p>
+            <a href="/" className="text-brand hover:underline">
+              ← Back to Home
+            </a>
+          </div>
         </div>
       </section>
     );

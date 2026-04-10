@@ -10,6 +10,14 @@ export async function GET() {
   }
 
   try {
+    // Check if the emailPreferences model exists (migration might not have run)
+    if (!prisma.emailPreferences) {
+      return NextResponse.json(
+        { error: "Email preferences feature not available. Please run database migrations." },
+        { status: 503 }
+      );
+    }
+
     let preferences = await prisma.emailPreferences.findUnique({
       where: { userId: session.userId },
     });
@@ -29,8 +37,18 @@ export async function GET() {
     }
 
     return NextResponse.json({ preferences });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Error fetching email preferences:", error);
+    
+    // Check if it's a "table doesn't exist" error
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    if (errorMessage.includes("does not exist") || errorMessage.includes("relation") || errorMessage.includes("findUnique")) {
+      return NextResponse.json(
+        { error: "Email preferences feature not available. Please run database migrations." },
+        { status: 503 }
+      );
+    }
+    
     return NextResponse.json(
       { error: "Failed to fetch preferences" },
       { status: 500 }
@@ -46,6 +64,14 @@ export async function PUT(request: NextRequest) {
   }
 
   try {
+    // Check if the emailPreferences model exists
+    if (!prisma.emailPreferences) {
+      return NextResponse.json(
+        { error: "Email preferences feature not available. Please run database migrations." },
+        { status: 503 }
+      );
+    }
+
     const body = await request.json();
     const {
       frequency,
@@ -105,8 +131,17 @@ export async function PUT(request: NextRequest) {
     });
 
     return NextResponse.json({ preferences });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Error updating email preferences:", error);
+    
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    if (errorMessage.includes("does not exist") || errorMessage.includes("relation")) {
+      return NextResponse.json(
+        { error: "Email preferences feature not available. Please run database migrations." },
+        { status: 503 }
+      );
+    }
+    
     return NextResponse.json(
       { error: "Failed to update preferences" },
       { status: 500 }

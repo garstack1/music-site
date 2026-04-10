@@ -58,6 +58,11 @@ export default function AdminSettingsPage() {
       label: "Competitions",
       description: "Show competitions section on the site and allow subscribers to enter",
     },
+    {
+      key: "email_preferences_enabled",
+      label: "Email Preferences",
+      description: "Allow users to manage their email subscription preferences and receive digest emails",
+    },
   ];
 
   return (

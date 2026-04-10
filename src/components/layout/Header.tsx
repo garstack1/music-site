@@ -1,13 +1,24 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 
 export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [emailPrefsEnabled, setEmailPrefsEnabled] = useState(false);
   const { user, loading, logout } = useAuth();
+
+  useEffect(() => {
+    // Fetch settings to check if email preferences is enabled
+    fetch("/api/settings")
+      .then((r) => r.json())
+      .then((data) => {
+        setEmailPrefsEnabled(data.settings?.email_preferences_enabled === "true");
+      })
+      .catch(() => {});
+  }, []);
 
   return (
     <header className="bg-dark-bg border-b border-dark-border sticky top-0 z-50">
@@ -71,13 +82,15 @@ export default function Header() {
                       >
                         Saved Events
                       </Link>
-                      <Link
-                        href="/account/preferences"
-                        className="block px-4 py-2.5 text-dark-muted hover:text-dark-text hover:bg-dark-bg text-sm transition-colors"
-                        onClick={() => setUserMenuOpen(false)}
-                      >
-                        Email Preferences
-                      </Link>
+                      {emailPrefsEnabled && (
+                        <Link
+                          href="/account/preferences"
+                          className="block px-4 py-2.5 text-dark-muted hover:text-dark-text hover:bg-dark-bg text-sm transition-colors"
+                          onClick={() => setUserMenuOpen(false)}
+                        >
+                          Email Preferences
+                        </Link>
+                      )}
                       <button
                         onClick={() => {
                           setUserMenuOpen(false);
@@ -147,9 +160,11 @@ export default function Header() {
                     <p className="text-dark-text text-sm font-medium">{user.name || "User"}</p>
                     <p className="text-dark-muted text-xs">{user.email}</p>
                   </div>
-                  <Link href="/account/preferences" className="text-dark-muted hover:text-dark-text text-sm tracking-wide" onClick={() => setMobileMenuOpen(false)}>
-                    Email Preferences
-                  </Link>
+                  {emailPrefsEnabled && (
+                    <Link href="/account/preferences" className="text-dark-muted hover:text-dark-text text-sm tracking-wide" onClick={() => setMobileMenuOpen(false)}>
+                      Email Preferences
+                    </Link>
+                  )}
                   <button
                     onClick={() => { setMobileMenuOpen(false); logout(); }}
                     className="text-dark-muted hover:text-brand text-sm tracking-wide text-left"
