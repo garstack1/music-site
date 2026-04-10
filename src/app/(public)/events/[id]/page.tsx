@@ -30,9 +30,14 @@ async function getOtherVenueEvents(venue: string | null, currentEventId: string)
 export default async function EventDetailPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
-  const { id } = params;
+  const { id } = await params;
+  
+  if (!id) {
+    notFound();
+  }
+  
   const event = await getEventDetails(id);
 
   if (!event) {
