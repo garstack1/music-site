@@ -2,6 +2,7 @@ import { prisma } from "@/lib/db";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { Metadata } from "next";
+import SaveEventButton from "@/components/events/SaveEventButton";
 
 export const revalidate = 60; // Revalidate every 60 seconds
 
@@ -86,13 +87,9 @@ export default async function EventDetailPage({
                     alt={event.name}
                     className="w-full h-full object-cover"
                   />
-                  {/* Save/Like Button */}
+                  {/* Save Button */}
                   <div className="absolute top-4 right-4">
-                    <button className="bg-white/90 hover:bg-white rounded-full p-3 transition-colors shadow-md hover:text-red-500">
-                      <svg className="w-6 h-6 text-gray-400 hover:text-red-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-                      </svg>
-                    </button>
+                    <SaveEventButton eventId={event.id} />
                   </div>
                 </div>
               )}
@@ -368,13 +365,9 @@ export default async function EventDetailPage({
                           <span className="text-light-muted text-3xl">♪</span>
                         </div>
                       )}
-                      {/* Save/Like Button */}
+                      {/* Save Button */}
                       <div className="absolute top-2 right-2">
-                        <button className="bg-white/90 hover:bg-white rounded-full p-2 transition-colors">
-                          <svg className="w-5 h-5 text-gray-400 hover:text-red-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-                          </svg>
-                        </button>
+                        <SaveEventButton eventId={venueEvent.id} />
                       </div>
                     </div>
                     <div className="p-4">
