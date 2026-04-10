@@ -27,6 +27,12 @@ export default function AdminSubscribersPage() {
   const [sending, setSending] = useState(false);
   const [sendResult, setSendResult] = useState<SendResult | null>(null);
   const [error, setError] = useState("");
+  
+  // Test email state
+  const [showTestEmail, setShowTestEmail] = useState(false);
+  const [testEmail, setTestEmail] = useState("");
+  const [sendingTest, setSendingTest] = useState(false);
+  const [testResult, setTestResult] = useState<{ success: boolean; message?: string; error?: string } | null>(null);
 
   useEffect(() => {
     fetchStats();
@@ -42,6 +48,32 @@ export default function AdminSubscribersPage() {
       setError("Failed to load subscriber stats");
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function handleSendTestEmail() {
+    if (!testEmail.trim()) return;
+    
+    setSendingTest(true);
+    setTestResult(null);
+
+    try {
+      const res = await fetch("/api/admin/test-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: testEmail.trim() }),
+      });
+      const data = await res.json();
+      
+      if (data.success) {
+        setTestResult({ success: true, message: data.message });
+      } else {
+        setTestResult({ success: false, error: data.error });
+      }
+    } catch {
+      setTestResult({ success: false, error: "Failed to send test email" });
+    } finally {
+      setSendingTest(false);
     }
   }
 
@@ -83,14 +115,62 @@ export default function AdminSubscribersPage() {
     <div>
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-dark-text text-2xl font-bold">Subscribers</h1>
-        <button
-          onClick={handleSendEmails}
-          disabled={sending}
-          className="bg-brand hover:bg-brand-hover text-white px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50"
-        >
-          {sending ? "Sending..." : "Send Emails Now"}
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setShowTestEmail(!showTestEmail)}
+            className="bg-dark-surface border border-dark-border hover:border-brand text-dark-text px-4 py-2 text-sm font-medium transition-colors"
+          >
+            📧 Send Test Email
+          </button>
+          <button
+            onClick={handleSendEmails}
+            disabled={sending}
+            className="bg-brand hover:bg-brand-hover text-white px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50"
+          >
+            {sending ? "Sending..." : "Send Emails Now"}
+          </button>
+        </div>
       </div>
+
+      {/* Test Email Panel */}
+      {showTestEmail && (
+        <div className="mb-6 bg-dark-surface border border-dark-border p-4">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-dark-text text-sm font-semibold">Send Test Email</h3>
+            <button 
+              onClick={() => { setShowTestEmail(false); setTestResult(null); }}
+              className="text-dark-muted hover:text-dark-text text-xs"
+            >
+              ✕
+            </button>
+          </div>
+          <p className="text-dark-muted text-xs mb-4">
+            Send a sample digest email to test how it looks. Uses real data from your site.
+          </p>
+          <div className="flex gap-3">
+            <input
+              type="email"
+              value={testEmail}
+              onChange={(e) => setTestEmail(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleSendTestEmail()}
+              placeholder="Enter email address..."
+              className="flex-1 px-3 py-2 bg-dark-bg border border-dark-border text-dark-text text-sm placeholder-dark-muted focus:outline-none focus:border-brand transition-colors"
+            />
+            <button
+              onClick={handleSendTestEmail}
+              disabled={sendingTest || !testEmail.trim()}
+              className="bg-brand hover:bg-brand-hover text-white px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50"
+            >
+              {sendingTest ? "Sending..." : "Send Test"}
+            </button>
+          </div>
+          {testResult && (
+            <div className={`mt-3 text-sm ${testResult.success ? "text-green-400" : "text-red-400"}`}>
+              {testResult.success ? testResult.message : `Error: ${testResult.error}`}
+            </div>
+          )}
+        </div>
+      )}
 
       {error && (
         <div className="mb-6 px-4 py-3 bg-red-900/30 border border-red-800/50 text-red-400 text-sm">
