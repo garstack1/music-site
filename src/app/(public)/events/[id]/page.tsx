@@ -9,6 +9,7 @@ export const revalidate = 60; // Revalidate every 60 seconds
 async function getEventDetails(id: string) {
   return prisma.event.findUnique({
     where: { id },
+    include: { presales: { orderBy: { startDateTime: "asc" } } },
   });
 }
 
@@ -197,6 +198,55 @@ export default async function EventDetailPage({
                         ? `From ${event.priceCurrency || "€"}${event.priceMin}`
                         : `From ${event.priceCurrency || "€"}${event.priceMax}`}
                     </p>
+                  </div>
+                )}
+
+                {/* Sold Out Status */}
+                {event.soldOut && (
+                  <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded">
+                    <p className="text-red-700 font-semibold text-center text-sm">SOLD OUT</p>
+                  </div>
+                )}
+
+                {/* Presales */}
+                {event.presales && event.presales.length > 0 && (
+                  <div className="mb-4 pb-4 border-b border-light-border">
+                    <p className="text-gray-600 text-sm font-medium mb-3">Presales</p>
+                    <div className="space-y-3">
+                      {event.presales.map((presale) => (
+                        <div key={presale.id} className="bg-gray-50 p-3 rounded text-sm">
+                          <p className="font-semibold text-gray-900 mb-1">{presale.name}</p>
+                          {presale.description && (
+                            <p className="text-gray-700 mb-2 text-xs">{presale.description}</p>
+                          )}
+                          <p className="text-gray-600 text-xs mb-2">
+                            {new Date(presale.startDateTime).toLocaleDateString("en-IE", {
+                              day: "short",
+                              month: "short",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}{" "}
+                            →{" "}
+                            {new Date(presale.endDateTime).toLocaleDateString("en-IE", {
+                              day: "short",
+                              month: "short",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                          </p>
+                          {presale.url && (
+                            <a
+                              href={presale.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-block text-brand hover:underline text-xs font-semibold"
+                            >
+                              Learn More →
+                            </a>
+                          )}
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
 
