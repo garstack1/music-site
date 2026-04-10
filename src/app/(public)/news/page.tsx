@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
-import FeaturedSlider from "@/components/FeaturedSlider";
+import HomeFeaturedCarousel from "@/components/HomeFeaturedCarousel";
 
 interface NewsArticle {
   id: string;
@@ -214,20 +214,27 @@ export default function NewsPage() {
         </div>
       </section>
 
-      <section className="bg-light-bg">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          {/* Featured Slider - limit to 10, oldest removed when adding 11th */}
-          {featured.length > 0 && (
-            <FeaturedSlider 
+      {/* Featured News Carousel Section */}
+      {featured.length > 0 && (
+        <section className="bg-dark-bg w-full">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+            <h2 className="text-light-text text-xl font-bold mb-6">Featured News</h2>
+            <HomeFeaturedCarousel 
               items={featured.slice(0, 10).map(article => ({
                 id: article.id,
+                type: "news" as const,
                 title: article.title,
                 slug: article.slug,
                 imageUrl: article.imageUrl,
+                date: article.publishedAt.toISOString(),
+                summary: article.summary,
               }))}
-              type="news"
             />
-          )}
+          </div>
+        </section>
+      )}
+
+      <section className="bg-light-bg">
 
           {/* All Articles by Month */}
           {groupedByMonth.length === 0 ? (

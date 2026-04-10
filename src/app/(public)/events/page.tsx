@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo, useRef } from "react";
 import SaveEventButton from "@/components/events/SaveEventButton";
 import TicketButton from "@/components/events/TicketButton";
 import EventCalendar from "@/components/events/EventCalendar";
+import HomeFeaturedCarousel from "@/components/HomeFeaturedCarousel";
 import dynamic from "next/dynamic";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -311,7 +312,28 @@ export default function EventsPage() {
   const nextWeek = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
   const currentMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
 
-  const featuredEvents = useMemo(() => events.filter((e) => e.featured).slice(0, 10), [events]);
+  // Featured events: show next 10 upcoming featured events, ordered by date
+  const featuredEvents = useMemo(() => {
+    return events
+      .filter((e) => e.featured && new Date(e.date) >= now)
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+      .slice(0, 10);
+  }, [events]);
+
+  // Auto-unmark past featured events
+  useEffect(() => {
+    const pastFeatured = events.filter((e) => e.featured && new Date(e.date) < now);
+    if (pastFeatured.length > 0) {
+      pastFeatured.forEach((event) => {
+        fetch(`/api/admin/events/${event.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ featured: false }),
+        }).catch((err) => console.error("Failed to unmark event:", err));
+      });
+    }
+  }, [events]);
+
   const thisWeekEvents = useMemo(() => events.filter((e) => new Date(e.date) >= now && new Date(e.date) <= nextWeek), [events]);
 
   const tenDaysAgo = new Date(now.getTime() - 10 * 24 * 60 * 60 * 1000);
@@ -483,10 +505,19 @@ export default function EventsPage() {
       ) : (
         <>
           {featuredEvents.length > 0 && !hasActiveFilters && (
-            <section className="bg-light-surface border-b border-light-border">
-              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                <h2 className="text-xl font-bold mb-4"><span className="text-brand">Featured</span> Events</h2>
-                <Carousel events={featuredEvents} />
+            <section className="bg-dark-bg w-full">
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+                <h2 className="text-light-text text-xl font-bold mb-6">Featured Events</h2>
+                <HomeFeaturedCarousel
+                  items={featuredEvents.map((event) => ({
+                    id: event.id,
+                    type: "event" as const,
+                    title: event.name,
+                    slug: event.id,
+                    imageUrl: event.imageUrl,
+                    date: event.date.toISOString(),
+                  }))}
+                />
               </div>
             </section>
           )}
