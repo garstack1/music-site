@@ -99,6 +99,16 @@ export default async function EventDetailPage({
 
             {/* Sidebar */}
             <div>
+              {/* DEBUG: Show what we have */}
+              <div className="bg-gray-100 border border-gray-300 p-4 rounded-lg mb-6 text-xs">
+                <p className="font-bold mb-2">DEBUG INFO:</p>
+                <p>date: {event.date ? "✓" : "✗"}</p>
+                <p>startTime: {event.startTime ? event.startTime : "null"}</p>
+                <p>type: {event.type ? event.type : "null"}</p>
+                <p>genre: {event.genre ? event.genre : "null"}</p>
+                <p>venue: {event.venue ? event.venue : "null"}</p>
+              </div>
+
               {/* Event Details Card */}
               <div className="bg-white border border-light-border p-6 rounded-lg mb-6">
                 <h3 className="text-lg font-bold mb-4">Event Details</h3>
