@@ -226,7 +226,7 @@ export default function NewsPage() {
                 title: article.title,
                 slug: article.slug,
                 imageUrl: article.imageUrl,
-                date: article.publishedAt.toISOString(),
+                date: article.publishedAt instanceof Date ? article.publishedAt.toISOString() : article.publishedAt,
                 summary: article.summary,
               }))}
             />
