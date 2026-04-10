@@ -26,11 +26,50 @@ model User {
   newsArticles  NewsArticle[]  @relation("NewsArticleCreatedBy")
   competitionWins    Competition[]      @relation("CompetitionWinner")
   competitionEntries CompetitionEntry[]
+  emailPreferences   EmailPreferences?
 }
 
 enum UserRole {
   ADMIN
   PUBLIC
+}
+
+// ============================================
+// EMAIL PREFERENCES
+// ============================================
+
+model EmailPreferences {
+  id                String        @id @default(cuid())
+  user              User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId            String        @unique
+  
+  // Email frequency
+  frequency         EmailFrequency @default(NONE)
+  preferredDay      Int?          // 0-6 for weekly (0=Sunday), 1-28 for monthly
+  
+  // Content preferences
+  includeFeatured   Boolean       @default(true)
+  includePresale    Boolean       @default(true)
+  includeExclusive  Boolean       @default(true)
+  includeCompetitions Boolean     @default(true)
+  
+  // Tracking
+  lastSentAt        DateTime?
+  unsubscribedAt    DateTime?
+  unsubscribeToken  String        @unique @default(cuid())
+  
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  
+  @@index([frequency])
+  @@index([lastSentAt])
+}
+
+enum EmailFrequency {
+  NONE
+  DAILY
+  WEEKLY
+  MONTHLY
 }
 
 model SavedEvent {

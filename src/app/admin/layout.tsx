@@ -36,19 +36,22 @@ export default function AdminLayout({
                 <Link href="/admin/reviews" className="text-dark-muted hover:text-dark-text text-xs transition-colors">
                   Reviews
                 </Link>
+                <Link href="/admin/competitions" className="text-dark-muted hover:text-dark-text text-xs transition-colors">
+                  Competitions
+                </Link>
                 <Link href="/admin/feeds" className="text-dark-muted hover:text-dark-text text-xs transition-colors">
                   RSS Feeds
                 </Link>
                 <Link href="/admin/csv-sources" className="text-dark-muted hover:text-dark-text text-xs transition-colors">
                   CSV Sources
                 </Link>
+                <Link href="/admin/subscribers" className="text-dark-muted hover:text-dark-text text-xs transition-colors">
+                  Subscribers
+                </Link>
                 <Link href="/admin/moderation" className="text-dark-muted hover:text-dark-text text-xs transition-colors">
                   Moderation
                 </Link>
                 <Link href="/admin/settings" className="text-dark-muted hover:text-dark-text text-xs transition-colors">
-                </Link>
-                <Link href="/admin/competitions" className="text-dark-muted hover:text-dark-text text-xs transition-colors">
-                  Competitions
                   Settings
                 </Link>
               </nav>

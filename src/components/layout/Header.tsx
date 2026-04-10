@@ -71,6 +71,13 @@ export default function Header() {
                       >
                         Saved Events
                       </Link>
+                      <Link
+                        href="/account/preferences"
+                        className="block px-4 py-2.5 text-dark-muted hover:text-dark-text hover:bg-dark-bg text-sm transition-colors"
+                        onClick={() => setUserMenuOpen(false)}
+                      >
+                        Email Preferences
+                      </Link>
                       <button
                         onClick={() => {
                           setUserMenuOpen(false);
@@ -140,6 +147,9 @@ export default function Header() {
                     <p className="text-dark-text text-sm font-medium">{user.name || "User"}</p>
                     <p className="text-dark-muted text-xs">{user.email}</p>
                   </div>
+                  <Link href="/account/preferences" className="text-dark-muted hover:text-dark-text text-sm tracking-wide" onClick={() => setMobileMenuOpen(false)}>
+                    Email Preferences
+                  </Link>
                   <button
                     onClick={() => { setMobileMenuOpen(false); logout(); }}
                     className="text-dark-muted hover:text-brand text-sm tracking-wide text-left"
