@@ -272,13 +272,33 @@ export async function checkEmails(): Promise<EmailImportResult> {
             if (textMatch) {
               bodyText = textMatch[1];
               // Handle quoted-printable encoding
-              bodyText = bodyText.replace(/=\r\n/g, "").replace(/=([0-9A-F]{2})/gi, (_, hex) => String.fromCharCode(parseInt(hex, 16)));
+              bodyText = bodyText.replace(/=\r\n/g, "").replace(/=([0-9A-F]{2})/gi, (_, hex) => {
+                const byte = parseInt(hex, 16);
+                // Handle ISO-8859-1 to UTF-8 conversion for special characters
+                if (charset === "ISO-8859-1" || charset === "WINDOWS-1252") {
+                  if (byte >= 0x80 && byte <= 0xFF) {
+                    // Convert ISO-8859-1 byte to UTF-8
+                    return String.fromCharCode(byte);
+                  }
+                }
+                return String.fromCharCode(byte);
+              });
               // Decode HTML entities
               bodyText = decodeHtmlEntities(bodyText);
             } else if (htmlMatch) {
               let htmlContent = htmlMatch[1];
               // Handle quoted-printable encoding in HTML
-              htmlContent = htmlContent.replace(/=\r\n/g, "").replace(/=([0-9A-F]{2})/gi, (_, hex) => String.fromCharCode(parseInt(hex, 16)));
+              htmlContent = htmlContent.replace(/=\r\n/g, "").replace(/=([0-9A-F]{2})/gi, (_, hex) => {
+                const byte = parseInt(hex, 16);
+                // Handle ISO-8859-1 to UTF-8 conversion for special characters
+                if (charset === "ISO-8859-1" || charset === "WINDOWS-1252") {
+                  if (byte >= 0x80 && byte <= 0xFF) {
+                    // Convert ISO-8859-1 byte to UTF-8
+                    return String.fromCharCode(byte);
+                  }
+                }
+                return String.fromCharCode(byte);
+              });
               bodyText = stripHtml(htmlContent);
             } else {
               const headerEnd = source.indexOf("\r\n\r\n");
@@ -307,7 +327,19 @@ export async function checkEmails(): Promise<EmailImportResult> {
               continue;
             }
 
-            const title = extractTitle(content);
+            // Use email subject as title, with proper title casing
+            let title = msg.envelope?.subject || "Untitled";
+            // Decode HTML entities from subject if present
+            title = decodeHtmlEntities(title);
+            // Apply title case: first letter of each word capitalized, rest lowercase
+            title = title
+              .split(/\s+/)
+              .map(word => {
+                if (word.length === 0) return word;
+                return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+              })
+              .join(" ");
+            
             const summary = extractSummary(content);
             const images = extractImages(bodyText);
             const videos = extractVideos(bodyText);
