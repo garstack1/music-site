@@ -80,12 +80,20 @@ export default async function EventDetailPage({
             <div className="md:col-span-2">
               {/* Image */}
               {event.imageUrl && (
-                <div className="aspect-video bg-light-surface overflow-hidden rounded-lg mb-8">
+                <div className="aspect-video bg-light-surface overflow-hidden rounded-lg mb-8 relative group">
                   <img
                     src={event.imageUrl}
                     alt={event.name}
                     className="w-full h-full object-cover"
                   />
+                  {/* Save Button */}
+                  <div className="absolute top-4 right-4">
+                    <button className="bg-white/90 hover:bg-white rounded-full p-3 transition-colors shadow-md">
+                      <svg className="w-6 h-6 text-red-500" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                      </svg>
+                    </button>
+                  </div>
                 </div>
               )}
 
@@ -105,10 +113,15 @@ export default async function EventDetailPage({
                 <h3 className="text-lg font-bold mb-4 text-gray-900">Event Details</h3>
 
                 {/* Date & Time */}
-                <div className="mb-4 pb-4 border-b border-light-border">
-                  <p className="text-gray-600 text-sm font-medium">Date & Time</p>
-                  <p className="text-gray-900 font-semibold">{formatDate(event.date)}</p>
-                  <p className="text-gray-800">{formatTime(event.startTime) || "Time TBA"}</p>
+                <div className="mb-4 pb-4 border-b border-light-border flex items-start gap-3">
+                  <svg className="w-5 h-5 text-brand shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                  <div>
+                    <p className="text-gray-600 text-sm font-medium">Date & Time</p>
+                    <p className="text-gray-900 font-semibold">{formatDate(event.date)}</p>
+                    <p className="text-gray-800">{formatTime(event.startTime) || "Time TBA"}</p>
+                  </div>
                 </div>
 
                 {/* Type */}
@@ -132,14 +145,20 @@ export default async function EventDetailPage({
                 )}
 
                 {/* Venue */}
-                <div className="mb-4 pb-4 border-b border-light-border">
-                  <p className="text-gray-600 text-sm font-medium">Venue</p>
-                  <p className="text-gray-900 font-semibold">{event.venue || "Venue not specified"}</p>
-                  {event.city && (
-                    <p className="text-gray-700 text-sm">
-                      {event.city}, {event.country}
-                    </p>
-                  )}
+                <div className="mb-4 pb-4 border-b border-light-border flex items-start gap-3">
+                  <svg className="w-5 h-5 text-brand shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                  <div>
+                    <p className="text-gray-600 text-sm font-medium">Venue</p>
+                    <p className="text-gray-900 font-semibold">{event.venue || "Venue not specified"}</p>
+                    {event.city && (
+                      <p className="text-gray-700 text-sm">
+                        {event.city}, {event.country}
+                      </p>
+                    )}
+                  </div>
                 </div>
 
                 {/* Price */}
@@ -170,7 +189,7 @@ export default async function EventDetailPage({
 
                 {/* Share */}
                 <div className="pt-4 border-t border-light-border">
-                  <p className="text-light-muted text-sm font-medium mb-3">Share</p>
+                  <p className="text-gray-600 text-sm font-medium mb-3">Share</p>
                   <div className="flex gap-3">
                     <a
                       href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(
@@ -178,7 +197,7 @@ export default async function EventDetailPage({
                       )}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-light-muted hover:text-[#1877F2] transition-colors"
+                      className="text-gray-600 hover:text-[#1877F2] transition-colors"
                       title="Share on Facebook"
                     >
                       <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
@@ -191,7 +210,7 @@ export default async function EventDetailPage({
                       )}&text=${encodeURIComponent(`Check out: ${event.name}`)}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-light-muted hover:text-black transition-colors"
+                      className="text-gray-600 hover:text-black transition-colors"
                       title="Share on X"
                     >
                       <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
@@ -200,6 +219,58 @@ export default async function EventDetailPage({
                     </a>
                   </div>
                 </div>
+
+                {/* Artist Social Links */}
+                {(event.artistSpotify || event.artistFacebook || event.artistTwitter || event.artistInstagram || event.artistYoutube || event.artistTiktok) && (
+                  <div className="pt-4 border-t border-light-border">
+                    <p className="text-gray-600 text-sm font-medium mb-3">Follow Artist</p>
+                    <div className="flex gap-3 flex-wrap">
+                      {event.artistSpotify && (
+                        <a href={event.artistSpotify} target="_blank" rel="noopener noreferrer" className="text-gray-600 hover:text-green-500 transition-colors" title="Spotify">
+                          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.315-.74.385-1.12.1.582-.585 1.46-1.5 2.02-2.509.52-.909.993-1.841 1.12-3.12.99.164 1.6 1.291 1.666 2.352.08 1.286-.393 2.26-1.043 3.514-.52 1.022-1.374 2.237-2.320 2.948-.915.71-2.505.703-2.999-.66-.19-.486-.073-1.46.433-1.922.44-.43 1.332.007 1.64-1.706.12-.548-.399-1.100-.bb2-1.294l-.049-.148-.09-.119-.116-.149-.149-.19-.184-.244c-.11-.115-.146-.226-.042-.31.104-.087.315-.042.42.058l.183.242c.452.573.876 1.139 1.127 1.712a4.989 4.989 0 01-.141 4.002zM5.032 7.21c.704-1.157 2.473-1.229 3.139-.81.667.419 1.073 1.148.968 1.965-.105.817-.79 1.409-1.843 1.409-.656 0-1.432-.353-2.264-1.564zm11.887 1.887c-.793 0-1.456-.59-1.56-1.379-.104-.788.516-1.512 1.409-1.512.893 0 1.56.724 1.56 1.512 0 .788-.667 1.379-1.409 1.379z" />
+                          </svg>
+                        </a>
+                      )}
+                      {event.artistFacebook && (
+                        <a href={event.artistFacebook} target="_blank" rel="noopener noreferrer" className="text-gray-600 hover:text-[#1877F2] transition-colors" title="Facebook">
+                          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+                          </svg>
+                        </a>
+                      )}
+                      {event.artistTwitter && (
+                        <a href={event.artistTwitter} target="_blank" rel="noopener noreferrer" className="text-gray-600 hover:text-black transition-colors" title="X/Twitter">
+                          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                          </svg>
+                        </a>
+                      )}
+                      {event.artistInstagram && (
+                        <a href={event.artistInstagram} target="_blank" rel="noopener noreferrer" className="text-gray-600 hover:text-pink-500 transition-colors" title="Instagram">
+                          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163C8.756 0 8.331.012 7.052.072 2.693.272.273 2.69.073 7.052.012 8.331 0 8.756 0 12c0 3.244.011 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.061 1.689.072 4.948.072 3.259 0 3.668-.011 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.061-1.28.073-1.689.073-4.948 0-3.259-.011-3.668-.072-4.948-.196-4.354-2.617-6.78-6.979-6.98C15.668.012 15.259 0 12 0z" />
+                            <path d="M12 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm4.965-10.322a1.44 1.44 0 110-2.88 1.44 1.44 0 010 2.88z" />
+                          </svg>
+                        </a>
+                      )}
+                      {event.artistYoutube && (
+                        <a href={event.artistYoutube} target="_blank" rel="noopener noreferrer" className="text-gray-600 hover:text-red-600 transition-colors" title="YouTube">
+                          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
+                          </svg>
+                        </a>
+                      )}
+                      {event.artistTiktok && (
+                        <a href={event.artistTiktok} target="_blank" rel="noopener noreferrer" className="text-gray-600 hover:text-black transition-colors" title="TikTok">
+                          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.66 1.94 2.89 2.89 0 0 1 5.66-1.94v-3.54a8.05 8.05 0 0 0-5.66 2.33v-4.54a4.83 4.83 0 0 0 4.84-4.75.88.88 0 0 0-.88-.88h-3.77z" />
+                          </svg>
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Back Button */}
@@ -215,7 +286,7 @@ export default async function EventDetailPage({
           {/* Other Events at Same Venue */}
           {otherVenueEvents.length > 0 && event.venue && (
             <div className="mt-16 pt-12 border-t border-light-border">
-              <h2 className="text-dark-text text-2xl font-bold mb-6">
+              <h2 className="text-gray-900 text-2xl font-bold mb-6">
                 Other Events at {event.venue}
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -225,7 +296,7 @@ export default async function EventDetailPage({
                     href={`/events/${venueEvent.id}`}
                     className="group bg-white border border-light-border hover:border-brand transition-colors overflow-hidden"
                   >
-                    <div className="aspect-video bg-light-surface overflow-hidden">
+                    <div className="aspect-video bg-light-surface overflow-hidden relative">
                       {venueEvent.imageUrl ? (
                         <img
                           src={venueEvent.imageUrl}
@@ -237,6 +308,14 @@ export default async function EventDetailPage({
                           <span className="text-light-muted text-3xl">♪</span>
                         </div>
                       )}
+                      {/* Save Button */}
+                      <div className="absolute top-2 right-2">
+                        <button className="bg-white/90 hover:bg-white rounded-full p-2 transition-colors">
+                          <svg className="w-5 h-5 text-red-500" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                          </svg>
+                        </button>
+                      </div>
                     </div>
                     <div className="p-4">
                       {venueEvent.artist && (
