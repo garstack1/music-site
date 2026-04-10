@@ -134,6 +134,20 @@ model ArticleTag {
 // ============================================
 // EVENTS
 // ============================================
+model Presale {
+  id            String    @id @default(cuid())
+  event         Event     @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  eventId       String
+  name          String
+  description   String?
+  url           String?
+  startDateTime DateTime
+  endDateTime   DateTime
+  createdAt     DateTime  @default(now())
+
+  @@index([eventId])
+}
+
 
 model Event {
   id            String      @id @default(cuid())
@@ -170,6 +184,8 @@ model Event {
   active        Boolean     @default(true)
   featured      Boolean     @default(false)
   subscriberOnly Boolean     @default(false)
+  soldOut       Boolean     @default(false)
+  presales      Presale[]
   ticketClicks  TicketClick[]
   savedEvents   SavedEvent[]
   createdAt     DateTime    @default(now())
