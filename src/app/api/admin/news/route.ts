@@ -13,6 +13,7 @@ export async function GET() {
     include: {
       tags: { include: { genre: true } },
       rssFeed: { select: { name: true } },
+      createdBy: { select: { displayName: true, name: true } },
     },
   });
 
@@ -72,6 +73,7 @@ export async function POST(request: NextRequest) {
         imageUrl: imageUrl || null,
         featured: featured || false,
         manual: true,
+        createdById: session.userId || undefined,
         publishedAt: new Date(),
         tags:
           genreIds && genreIds.length > 0

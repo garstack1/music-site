@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import Link from "next/link";
 
 interface Genre {
@@ -25,13 +25,19 @@ interface NewsArticle {
   publishedAt: string;
   tags: ArticleTag[];
   rssFeed: { name: string } | null;
+  createdBy: { displayName: string | null; name: string | null } | null;
 }
+
+type SortColumn = "title" | "source" | "date" | "featured" | "hidden";
+type SortDirection = "asc" | "desc";
 
 export default function AdminNewsPage() {
   const [articles, setArticles] = useState<NewsArticle[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [showHidden, setShowHidden] = useState(false);
+  const [sortColumn, setSortColumn] = useState<SortColumn>("date");
+  const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
 
   const fetchArticles = useCallback(async () => {
     try {
@@ -44,6 +50,65 @@ export default function AdminNewsPage() {
       setLoading(false);
     }
   }, []);
+
+  useEffect(() => {
+    fetchArticles();
+  }, [fetchArticles]);
+
+  const handleSort = (column: SortColumn) => {
+    if (sortColumn === column) {
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+    } else {
+      setSortColumn(column);
+      setSortDirection("asc");
+    }
+  };
+
+  const getSourceName = (article: NewsArticle): string => {
+    if (article.rssFeed) {
+      return article.rssFeed.name;
+    } else if (article.manual) {
+      if (article.createdBy) {
+        return article.createdBy.displayName || article.createdBy.name || "Unknown User";
+      }
+      return "Manual";
+    }
+    return "Unknown";
+  };
+
+  const sortedArticles = useMemo(() => {
+    const filtered = articles.filter(
+      (article) => !article.hidden || showHidden
+    );
+
+    return [...filtered].sort((a, b) => {
+      let compareValue = 0;
+
+      switch (sortColumn) {
+        case "title":
+          compareValue = a.title.localeCompare(b.title);
+          break;
+        case "source":
+          compareValue = getSourceName(a).localeCompare(getSourceName(b));
+          break;
+        case "date":
+          compareValue = new Date(a.publishedAt).getTime() - new Date(b.publishedAt).getTime();
+          break;
+        case "featured":
+          compareValue = (a.featured ? 1 : 0) - (b.featured ? 1 : 0);
+          break;
+        case "hidden":
+          compareValue = (a.hidden ? 1 : 0) - (b.hidden ? 1 : 0);
+          break;
+      }
+
+      return sortDirection === "asc" ? compareValue : -compareValue;
+    });
+  }, [articles, showHidden, sortColumn, sortDirection]);
+
+  const filteredArticles = showHidden
+    ? sortedArticles
+    : sortedArticles.filter((a) => !a.hidden);
 
   useEffect(() => {
     fetchArticles();
@@ -146,12 +211,37 @@ export default function AdminNewsPage() {
           <table className="w-full">
             <thead>
               <tr className="border-b border-dark-border">
-                <th className="text-left text-dark-muted text-xs font-medium px-4 py-3">Title</th>
-                <th className="text-center text-dark-muted text-xs font-medium px-4 py-3 hidden md:table-cell">Source</th>
+                <th 
+                  onClick={() => handleSort("title")}
+                  className="text-left text-dark-muted text-xs font-medium px-4 py-3 cursor-pointer hover:text-dark-text transition-colors"
+                >
+                  Title {sortColumn === "title" && (sortDirection === "asc" ? "↑" : "↓")}
+                </th>
+                <th 
+                  onClick={() => handleSort("source")}
+                  className="text-center text-dark-muted text-xs font-medium px-4 py-3 hidden md:table-cell cursor-pointer hover:text-dark-text transition-colors"
+                >
+                  Source {sortColumn === "source" && (sortDirection === "asc" ? "↑" : "↓")}
+                </th>
                 <th className="text-center text-dark-muted text-xs font-medium px-4 py-3 hidden md:table-cell">Tags</th>
-                <th className="text-center text-dark-muted text-xs font-medium px-4 py-3">Featured</th>
-                <th className="text-center text-dark-muted text-xs font-medium px-4 py-3">Visible</th>
-                <th className="text-center text-dark-muted text-xs font-medium px-4 py-3 hidden md:table-cell">Date</th>
+                <th 
+                  onClick={() => handleSort("featured")}
+                  className="text-center text-dark-muted text-xs font-medium px-4 py-3 cursor-pointer hover:text-dark-text transition-colors"
+                >
+                  Featured {sortColumn === "featured" && (sortDirection === "asc" ? "↑" : "↓")}
+                </th>
+                <th 
+                  onClick={() => handleSort("hidden")}
+                  className="text-center text-dark-muted text-xs font-medium px-4 py-3 cursor-pointer hover:text-dark-text transition-colors"
+                >
+                  Visible {sortColumn === "hidden" && (sortDirection === "asc" ? "↑" : "↓")}
+                </th>
+                <th 
+                  onClick={() => handleSort("date")}
+                  className="text-center text-dark-muted text-xs font-medium px-4 py-3 hidden md:table-cell cursor-pointer hover:text-dark-text transition-colors"
+                >
+                  Date {sortColumn === "date" && (sortDirection === "asc" ? "↑" : "↓")}
+                </th>
                 <th className="text-right text-dark-muted text-xs font-medium px-4 py-3">Actions</th>
               </tr>
             </thead>
@@ -170,8 +260,8 @@ export default function AdminNewsPage() {
                     </span>
                   </td>
                   <td className="px-4 py-3 text-center hidden md:table-cell">
-                    <span className="text-dark-muted text-xs truncate max-w-[200px] block">
-                      {article.sourceUrl.replace(/^https?:\/\/(www\.)?/, "").split("/")[0]}
+                    <span className="text-dark-text text-xs font-medium">
+                      {getSourceName(article)}
                     </span>
                   </td>
                   <td className="px-4 py-3 text-center hidden md:table-cell">

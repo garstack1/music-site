@@ -15,6 +15,7 @@ model User {
   id            String         @id @default(cuid())
   email         String         @unique
   name          String?
+  displayName   String?        // Custom display name for user (shown when creating manual articles)
   passwordHash  String
   role          UserRole       @default(PUBLIC)
   blocked       Boolean        @default(false)
@@ -22,6 +23,7 @@ model User {
   updatedAt     DateTime       @updatedAt
   publicReviews PublicReview[]
   savedEvents   SavedEvent[]
+  newsArticles  NewsArticle[]  @relation("NewsArticleCreatedBy")
   competitionWins    Competition[]      @relation("CompetitionWinner")
   competitionEntries CompetitionEntry[]
 }
@@ -111,6 +113,8 @@ model NewsArticle {
   body        String?
   rssFeed     RssFeed?  @relation(fields: [rssFeedId], references: [id])
   rssFeedId   String?
+  createdBy   User?     @relation("NewsArticleCreatedBy", fields: [createdById], references: [id])
+  createdById String?
   publishedAt DateTime
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
