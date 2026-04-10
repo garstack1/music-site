@@ -107,7 +107,7 @@ export default async function EventDetailPage({
                 <div className="mb-4 pb-4 border-b border-light-border">
                   <p className="text-light-muted text-sm font-medium">Date & Time</p>
                   <p className="text-dark-text font-semibold">{formatDate(event.date)}</p>
-                  <p className="text-dark-text">{formatTime(event.startTime)}</p>
+                  <p className="text-dark-text">{formatTime(event.startTime) || "Time TBA"}</p>
                 </div>
 
                 {/* Type */}
@@ -117,23 +117,41 @@ export default async function EventDetailPage({
                 </div>
 
                 {/* Genre */}
-                {event.genre && (
+                <div className="mb-4 pb-4 border-b border-light-border">
+                  <p className="text-light-muted text-sm font-medium">Genre</p>
+                  <p className="text-dark-text font-semibold">{event.genre || "Not specified"}</p>
+                </div>
+
+                {/* Artist */}
+                {event.artist && (
                   <div className="mb-4 pb-4 border-b border-light-border">
-                    <p className="text-light-muted text-sm font-medium">Genre</p>
-                    <p className="text-dark-text font-semibold">{event.genre}</p>
+                    <p className="text-light-muted text-sm font-medium">Artist</p>
+                    <p className="text-dark-text font-semibold">{event.artist}</p>
                   </div>
                 )}
 
                 {/* Venue */}
-                {event.venue && (
+                <div className="mb-4 pb-4 border-b border-light-border">
+                  <p className="text-light-muted text-sm font-medium">Venue</p>
+                  <p className="text-dark-text font-semibold">{event.venue || "Venue not specified"}</p>
+                  {event.city && (
+                    <p className="text-light-muted text-sm">
+                      {event.city}, {event.country}
+                    </p>
+                  )}
+                </div>
+
+                {/* Price */}
+                {(event.priceMin || event.priceMax) && (
                   <div className="mb-4 pb-4 border-b border-light-border">
-                    <p className="text-light-muted text-sm font-medium">Venue</p>
-                    <p className="text-dark-text font-semibold">{event.venue}</p>
-                    {event.city && (
-                      <p className="text-light-muted text-sm">
-                        {event.city}, {event.country}
-                      </p>
-                    )}
+                    <p className="text-light-muted text-sm font-medium">Price</p>
+                    <p className="text-dark-text font-semibold">
+                      {event.priceMin && event.priceMax
+                        ? `${event.priceCurrency || "€"}${event.priceMin} - ${event.priceCurrency || "€"}${event.priceMax}`
+                        : event.priceMin
+                        ? `From ${event.priceCurrency || "€"}${event.priceMin}`
+                        : `From ${event.priceCurrency || "€"}${event.priceMax}`}
+                    </p>
                   </div>
                 )}
 
@@ -194,10 +212,10 @@ export default async function EventDetailPage({
           </div>
 
           {/* Other Events at Same Venue */}
-          {otherVenueEvents.length > 0 && (
+          {otherVenueEvents.length > 0 && event.venue && (
             <div className="mt-16 pt-12 border-t border-light-border">
               <h2 className="text-dark-text text-2xl font-bold mb-6">
-                Other events at {event.venue || "this venue"}
+                Other Events at {event.venue}
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {otherVenueEvents.map((venueEvent) => (
