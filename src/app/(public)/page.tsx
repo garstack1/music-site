@@ -105,10 +105,10 @@ export default async function HomePage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {/* Latest news cards */}
             {latestNews.map((article) => (
-              <div key={article.id}>
-                <Link href={`/news/${article.slug}`} className="group block">
+              <div key={article.id} className="bg-white border border-light-border hover:border-brand transition-colors overflow-hidden">
+                <Link href={`/news/${article.slug}`} className="group block h-full flex flex-col">
                   {article.imageUrl && (
-                    <div className="aspect-video bg-light-surface overflow-hidden mb-3">
+                    <div className="aspect-video bg-light-surface overflow-hidden">
                       <img
                         src={article.imageUrl}
                         alt={article.title}
@@ -116,19 +116,21 @@ export default async function HomePage() {
                       />
                     </div>
                   )}
-                  <h3 className="text-lg font-semibold group-hover:text-brand transition-colors">
-                    {article.title}
-                  </h3>
-                  <p className="text-light-muted text-sm mt-2 line-clamp-2">
-                    {article.summary}
-                  </p>
-                  <p className="text-light-muted text-xs mt-2">
-                    {new Date(article.publishedAt).toLocaleDateString("en-IE", {
-                      day: "numeric",
-                      month: "long",
-                      year: "numeric",
-                    })}
-                  </p>
+                  <div className="p-4 flex flex-col flex-1">
+                    <h3 className="text-lg font-semibold group-hover:text-brand transition-colors">
+                      {article.title}
+                    </h3>
+                    <p className="text-light-muted text-sm mt-2 line-clamp-2 flex-1">
+                      {article.summary}
+                    </p>
+                    <p className="text-light-muted text-xs mt-2">
+                      {new Date(article.publishedAt).toLocaleDateString("en-IE", {
+                        day: "numeric",
+                        month: "long",
+                        year: "numeric",
+                      })}
+                    </p>
+                  </div>
                 </Link>
               </div>
             ))}
