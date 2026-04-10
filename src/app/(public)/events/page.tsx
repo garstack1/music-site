@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo, useRef } from "react";
 import SaveEventButton from "@/components/events/SaveEventButton";
 import TicketButton from "@/components/events/TicketButton";
 import EventCalendar from "@/components/events/EventCalendar";
-import HomeFeaturedCarousel from "@/components/HomeFeaturedCarousel";
+import LargerFeaturedCarousel from "@/components/LargerFeaturedCarousel";
 import dynamic from "next/dynamic";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -508,7 +508,7 @@ export default function EventsPage() {
             <section className="bg-dark-bg w-full">
               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
                 <h2 className="text-light-text text-xl font-bold mb-6">Featured Events</h2>
-                <HomeFeaturedCarousel
+                <LargerFeaturedCarousel
                   items={featuredEvents.map((event) => ({
                     id: event.id,
                     type: "event" as const,
