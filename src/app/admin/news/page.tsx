@@ -156,10 +156,6 @@ export default function AdminNewsPage() {
     }
   }
 
-  const filteredArticles = showHidden
-    ? articles
-    : articles.filter((a) => !a.hidden);
-
   const hiddenCount = articles.filter((a) => a.hidden).length;
 
   if (loading) {
