@@ -515,7 +515,7 @@ export default function EventsPage() {
                     title: event.name,
                     slug: event.id,
                     imageUrl: event.imageUrl,
-                    date: event.date.toISOString(),
+                    date: event.date instanceof Date ? event.date.toISOString() : event.date,
                   }))}
                 />
               </div>
