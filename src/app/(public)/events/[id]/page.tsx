@@ -1,6 +1,9 @@
 import { prisma } from "@/lib/db";
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import { Metadata } from "next";
+
+export const revalidate = 60; // Revalidate every 60 seconds
 
 async function getEventDetails(id: string) {
   return prisma.event.findUnique({
