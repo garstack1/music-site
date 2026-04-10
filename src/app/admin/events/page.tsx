@@ -42,6 +42,13 @@ export default function AdminEventsPage() {
   const [search, setSearch] = useState("");
   const [sortField, setSortField] = useState<SortField>("date");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
+  
+  // Artist search import state
+  const [showArtistSearch, setShowArtistSearch] = useState(false);
+  const [artistKeyword, setArtistKeyword] = useState("");
+  const [artistCountry, setArtistCountry] = useState("IE");
+  const [artistSearching, setArtistSearching] = useState(false);
+  const [artistResult, setArtistResult] = useState<ImportResult | null>(null);
 
   const fetchEvents = useCallback(async () => {
     try {
@@ -162,6 +169,36 @@ export default function AdminEventsPage() {
     }
   }
 
+  async function handleArtistSearch() {
+    if (!artistKeyword.trim()) return;
+    
+    setArtistSearching(true);
+    setArtistResult(null);
+    setError("");
+    
+    try {
+      const res = await fetch("/api/admin/ticketmaster/search", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ keyword: artistKeyword.trim(), countryCode: artistCountry }),
+      });
+      const data = await res.json();
+      
+      if (!res.ok) {
+        setError(data.error || "Search failed");
+        setArtistSearching(false);
+        return;
+      }
+      
+      setArtistResult(data.result);
+      fetchEvents();
+    } catch {
+      setError("Search failed");
+    } finally {
+      setArtistSearching(false);
+    }
+  }
+
   const sourceCount = {
     manual: events.filter((e) => e.source === "MANUAL").length,
     ticketmaster: events.filter((e) => e.source === "TICKETMASTER").length,
@@ -202,6 +239,12 @@ export default function AdminEventsPage() {
         <h1 className="text-dark-text text-2xl font-bold">Events</h1>
         <div className="flex items-center gap-3">
           <button
+            onClick={() => setShowArtistSearch(!showArtistSearch)}
+            className="bg-dark-surface border border-dark-border hover:border-brand text-dark-text px-4 py-2 text-sm font-medium transition-colors"
+          >
+            🔍 Search Artist
+          </button>
+          <button
             onClick={handleTicketmasterImport}
             disabled={importing}
             className="bg-dark-surface border border-dark-border hover:border-brand text-dark-text px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50"
@@ -216,6 +259,74 @@ export default function AdminEventsPage() {
           </Link>
         </div>
       </div>
+
+      {/* Artist Search Panel */}
+      {showArtistSearch && (
+        <div className="mb-6 bg-dark-surface border border-dark-border p-4">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-dark-text text-sm font-semibold">Search Ticketmaster by Artist</h3>
+            <button 
+              onClick={() => { setShowArtistSearch(false); setArtistResult(null); }}
+              className="text-dark-muted hover:text-dark-text text-xs"
+            >
+              ✕
+            </button>
+          </div>
+          <div className="flex flex-wrap items-end gap-3">
+            <div className="flex-1 min-w-[200px]">
+              <label className="block text-dark-muted text-xs mb-1">Artist / Event Name</label>
+              <input
+                type="text"
+                value={artistKeyword}
+                onChange={(e) => setArtistKeyword(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleArtistSearch()}
+                placeholder="e.g. Jack White, Fontaines D.C."
+                className="w-full px-3 py-2 bg-dark-bg border border-dark-border text-dark-text text-sm placeholder-dark-muted focus:outline-none focus:border-brand transition-colors"
+              />
+            </div>
+            <div className="w-32">
+              <label className="block text-dark-muted text-xs mb-1">Country</label>
+              <select
+                value={artistCountry}
+                onChange={(e) => setArtistCountry(e.target.value)}
+                className="w-full px-3 py-2 bg-dark-bg border border-dark-border text-dark-text text-sm focus:outline-none focus:border-brand transition-colors"
+              >
+                <option value="IE">Ireland</option>
+                <option value="GB">UK</option>
+                <option value="US">USA</option>
+                <option value="DE">Germany</option>
+                <option value="FR">France</option>
+                <option value="ES">Spain</option>
+                <option value="NL">Netherlands</option>
+                <option value="BE">Belgium</option>
+              </select>
+            </div>
+            <button
+              onClick={handleArtistSearch}
+              disabled={artistSearching || !artistKeyword.trim()}
+              className="bg-brand hover:bg-brand-hover text-white px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50"
+            >
+              {artistSearching ? "Searching..." : "Search & Import"}
+            </button>
+          </div>
+          
+          {artistResult && (
+            <div className="mt-4 pt-4 border-t border-dark-border">
+              <div className="flex items-center gap-4 text-sm">
+                <span className="text-dark-muted">Results for "{artistResult.type.replace("Search: ", "")}":</span>
+                <span className="text-dark-text">{artistResult.fetched} found</span>
+                {artistResult.imported > 0 && <span className="text-green-400">{artistResult.imported} imported</span>}
+                {artistResult.updated > 0 && <span className="text-blue-400">{artistResult.updated} updated</span>}
+                {artistResult.skipped > 0 && <span className="text-dark-muted">{artistResult.skipped} skipped</span>}
+                {artistResult.errors.length > 0 && <span className="text-red-400">{artistResult.errors.length} errors</span>}
+              </div>
+              {artistResult.fetched === 0 && (
+                <p className="text-dark-muted text-xs mt-2">No events found. Try a different search term or country.</p>
+              )}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Stats & Search */}
       <div className="flex flex-wrap items-center justify-between gap-4 mb-6">

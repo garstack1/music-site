@@ -17,6 +17,14 @@ const FESTIVAL_COUNTRIES = [
 
 const MUSIC_SEGMENT_ID = "KZFzniwnSyZfZ7v7nJ";
 
+interface TmPresale {
+  name: string;
+  description?: string;
+  url?: string;
+  startDateTime: string;
+  endDateTime: string;
+}
+
 interface TmEvent {
   id: string;
   name: string;
@@ -26,6 +34,9 @@ interface TmEvent {
   dates: {
     start: { localDate?: string; localTime?: string };
     end?: { localDate?: string };
+  };
+  sales?: {
+    presales?: TmPresale[];
   };
   priceRanges?: {
     type: string;
@@ -254,6 +265,8 @@ async function importEvents(
             ...socialLinks,
           };
 
+          let eventId: string;
+          
           if (existing) {
             await prisma.event.update({
               where: { id: existing.id },
@@ -279,10 +292,35 @@ async function importEvents(
                 artistTiktok: eventData.artistTiktok || undefined,
               },
             });
+            eventId = existing.id;
             result.updated++;
           } else {
-            await prisma.event.create({ data: eventData });
+            const newEvent = await prisma.event.create({ data: eventData });
+            eventId = newEvent.id;
             result.imported++;
+          }
+          
+          // Import presales if available
+          if (tm.sales?.presales && tm.sales.presales.length > 0) {
+            // Delete existing presales for this event first (to avoid duplicates on update)
+            await prisma.presale.deleteMany({ where: { eventId } });
+            
+            for (const presale of tm.sales.presales) {
+              try {
+                await prisma.presale.create({
+                  data: {
+                    eventId,
+                    name: presale.name,
+                    description: presale.description || null,
+                    url: presale.url || null,
+                    startDateTime: new Date(presale.startDateTime),
+                    endDateTime: new Date(presale.endDateTime),
+                  },
+                });
+              } catch (presaleError) {
+                // Silently continue if presale creation fails
+              }
+            }
           }
         } catch (e) {
           result.errors.push(e instanceof Error ? e.message : "Unknown error");
@@ -311,4 +349,160 @@ export async function importAllEvents(): Promise<ImportResult[]> {
   }
 
   return results;
+}
+
+// Search for events by keyword and import them with presales
+export async function searchAndImportEvents(keyword: string, countryCode: string = "IE"): Promise<ImportResult> {
+  if (!API_KEY) throw new Error("TICKETMASTER_API_KEY not set");
+  
+  const result: ImportResult = {
+    country: countryCode,
+    type: `Search: ${keyword}`,
+    fetched: 0,
+    imported: 0,
+    updated: 0,
+    skipped: 0,
+    errors: [],
+  };
+
+  try {
+    const params = new URLSearchParams({
+      apikey: API_KEY,
+      keyword,
+      countryCode,
+      segmentId: MUSIC_SEGMENT_ID,
+      size: "50",
+      sort: "date,asc",
+      startDateTime: new Date().toISOString().split(".")[0] + "Z",
+    });
+
+    const res = await fetch(`${BASE_URL}/events.json?${params}`);
+    if (!res.ok) throw new Error(`TM API error ${res.status}: ${await res.text()}`);
+
+    const data = await res.json();
+    const events: TmEvent[] = data._embedded?.events || [];
+    result.fetched = events.length;
+
+    for (const tm of events) {
+      try {
+        const dateStr = tm.dates?.start?.localDate;
+        if (!dateStr) { result.skipped++; continue; }
+
+        const date = new Date(dateStr);
+        if (date < new Date()) { result.skipped++; continue; }
+
+        const venue = tm._embedded?.venues?.[0];
+        const artist = tm._embedded?.attractions?.[0]?.name || null;
+        const venueName = venue?.name || null;
+        const city = venue?.city?.name || null;
+        const country = venue?.country?.countryCode || countryCode;
+        const eventIsFestival = isFestival(tm);
+
+        const fp = fingerprint(artist, venueName, city, dateStr);
+        const endDateStr = tm.dates?.end?.localDate;
+        const startTime = tm.dates?.start?.localTime || null;
+        const genre = getGenre(tm);
+        const subGenre = getSubGenre(tm);
+        const description = getDescription(tm);
+        const priceRange = tm.priceRanges?.[0];
+        const socialLinks = getSocialLinks(tm);
+
+        const existing = await prisma.event.findFirst({
+          where: {
+            OR: [{ fingerprint: fp }, { sourceId: tm.id }],
+          },
+        });
+
+        const eventData = {
+          name: tm.name,
+          type: eventIsFestival ? "FESTIVAL" as const : "CONCERT" as const,
+          artist,
+          venue: venueName,
+          city,
+          country,
+          date,
+          endDate: endDateStr ? new Date(endDateStr) : null,
+          ticketUrl: getAffiliateUrl(tm.url),
+          description,
+          imageUrl: getBestImage(tm.images),
+          genre,
+          subGenre,
+          startTime,
+          priceMin: priceRange?.min || null,
+          priceMax: priceRange?.max || null,
+          priceCurrency: priceRange?.currency || null,
+          source: "TICKETMASTER" as const,
+          sourceId: tm.id,
+          fingerprint: fp,
+          latitude: venue?.location?.latitude ? parseFloat(venue.location.latitude) : null,
+          longitude: venue?.location?.longitude ? parseFloat(venue.location.longitude) : null,
+          active: true,
+          ...socialLinks,
+        };
+
+        let eventId: string;
+
+        if (existing) {
+          await prisma.event.update({
+            where: { id: existing.id },
+            data: {
+              name: eventData.name,
+              ticketUrl: eventData.ticketUrl,
+              imageUrl: eventData.imageUrl || undefined,
+              genre: eventData.genre || undefined,
+              subGenre: eventData.subGenre || undefined,
+              startTime: eventData.startTime || undefined,
+              description: eventData.description || undefined,
+              priceMin: eventData.priceMin,
+              priceMax: eventData.priceMax,
+              priceCurrency: eventData.priceCurrency,
+              latitude: eventData.latitude,
+              longitude: eventData.longitude,
+              artistWebsite: eventData.artistWebsite || undefined,
+              artistFacebook: eventData.artistFacebook || undefined,
+              artistTwitter: eventData.artistTwitter || undefined,
+              artistInstagram: eventData.artistInstagram || undefined,
+              artistSpotify: eventData.artistSpotify || undefined,
+              artistYoutube: eventData.artistYoutube || undefined,
+              artistTiktok: eventData.artistTiktok || undefined,
+            },
+          });
+          eventId = existing.id;
+          result.updated++;
+        } else {
+          const newEvent = await prisma.event.create({ data: eventData });
+          eventId = newEvent.id;
+          result.imported++;
+        }
+
+        // Import presales if available
+        if (tm.sales?.presales && tm.sales.presales.length > 0) {
+          await prisma.presale.deleteMany({ where: { eventId } });
+          
+          for (const presale of tm.sales.presales) {
+            try {
+              await prisma.presale.create({
+                data: {
+                  eventId,
+                  name: presale.name,
+                  description: presale.description || null,
+                  url: presale.url || null,
+                  startDateTime: new Date(presale.startDateTime),
+                  endDateTime: new Date(presale.endDateTime),
+                },
+              });
+            } catch (presaleError) {
+              // Silently continue
+            }
+          }
+        }
+      } catch (e) {
+        result.errors.push(e instanceof Error ? e.message : "Unknown error");
+      }
+    }
+  } catch (e) {
+    result.errors.push(e instanceof Error ? e.message : "Unknown error");
+  }
+
+  return result;
 }
