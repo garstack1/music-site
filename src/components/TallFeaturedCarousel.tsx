@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 interface FeaturedEvent {
@@ -20,6 +21,7 @@ interface TallFeaturedCarouselProps {
 }
 
 export default function TallFeaturedCarousel({ events }: TallFeaturedCarouselProps) {
+  const router = useRouter();
   const scrollRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
@@ -119,7 +121,10 @@ export default function TallFeaturedCarousel({ events }: TallFeaturedCarouselPro
       >
         {events.map((event) => (
           <div key={event.id} className="snap-start shrink-0 w-[calc(25%-12px)] min-w-[280px] flex">
-            <div className="bg-white border border-light-border hover:border-brand transition-colors overflow-hidden flex flex-col h-full w-full">
+            <div 
+              onClick={() => router.push(`/events/${event.id}`)}
+              className="bg-white border border-light-border hover:border-brand transition-colors overflow-hidden flex flex-col h-full w-full cursor-pointer"
+            >
               {/* Image */}
               <div className="aspect-video bg-light-surface overflow-hidden">
                 {event.imageUrl ? (
@@ -145,11 +150,9 @@ export default function TallFeaturedCarousel({ events }: TallFeaturedCarouselPro
                 )}
 
                 {/* Event Name */}
-                <Link href="/events" className="group">
-                  <h3 className="font-semibold text-sm group-hover:text-brand transition-colors line-clamp-2 mb-2">
-                    {event.name}
-                  </h3>
-                </Link>
+                <h3 className="font-semibold text-sm hover:text-brand transition-colors line-clamp-2 mb-2">
+                  {event.name}
+                </h3>
 
                 {/* Date & Time */}
                 <div className="text-xs text-light-muted mb-2">
@@ -166,12 +169,12 @@ export default function TallFeaturedCarousel({ events }: TallFeaturedCarouselPro
                 )}
 
                 {/* Get Tickets Button */}
-                <Link
-                  href={`/events/${event.id}`}
+                <button
+                  onClick={() => router.push(`/events/${event.id}`)}
                   className="w-full bg-brand hover:bg-brand-hover text-white text-xs font-semibold py-2 px-3 rounded text-center transition-colors mb-2"
                 >
                   Get Tickets
-                </Link>
+                </button>
 
                 {/* Share Icons */}
                 <div className="flex items-center gap-2 justify-center border-t border-light-border pt-2">
