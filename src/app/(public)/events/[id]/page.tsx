@@ -102,41 +102,41 @@ export default async function EventDetailPage({
             <div>
               {/* Event Details Card */}
               <div className="bg-white border border-light-border p-6 rounded-lg mb-6">
-                <h3 className="text-lg font-bold mb-4">Event Details</h3>
+                <h3 className="text-lg font-bold mb-4 text-gray-900">Event Details</h3>
 
                 {/* Date & Time */}
                 <div className="mb-4 pb-4 border-b border-light-border">
-                  <p className="text-light-muted text-sm font-medium">Date & Time</p>
-                  <p className="text-dark-text font-semibold">{formatDate(event.date)}</p>
-                  <p className="text-dark-text">{formatTime(event.startTime) || "Time TBA"}</p>
+                  <p className="text-gray-600 text-sm font-medium">Date & Time</p>
+                  <p className="text-gray-900 font-semibold">{formatDate(event.date)}</p>
+                  <p className="text-gray-800">{formatTime(event.startTime) || "Time TBA"}</p>
                 </div>
 
                 {/* Type */}
                 <div className="mb-4 pb-4 border-b border-light-border">
-                  <p className="text-light-muted text-sm font-medium">Type</p>
-                  <p className="text-dark-text font-semibold capitalize">{event.type || "Event"}</p>
+                  <p className="text-gray-600 text-sm font-medium">Type</p>
+                  <p className="text-gray-900 font-semibold capitalize">{event.type || "Event"}</p>
                 </div>
 
                 {/* Genre */}
                 <div className="mb-4 pb-4 border-b border-light-border">
-                  <p className="text-light-muted text-sm font-medium">Genre</p>
-                  <p className="text-dark-text font-semibold">{event.genre || "Not specified"}</p>
+                  <p className="text-gray-600 text-sm font-medium">Genre</p>
+                  <p className="text-gray-900 font-semibold">{event.genre || "Not specified"}</p>
                 </div>
 
                 {/* Artist */}
                 {event.artist && (
                   <div className="mb-4 pb-4 border-b border-light-border">
-                    <p className="text-light-muted text-sm font-medium">Artist</p>
-                    <p className="text-dark-text font-semibold">{event.artist}</p>
+                    <p className="text-gray-600 text-sm font-medium">Artist</p>
+                    <p className="text-gray-900 font-semibold">{event.artist}</p>
                   </div>
                 )}
 
                 {/* Venue */}
                 <div className="mb-4 pb-4 border-b border-light-border">
-                  <p className="text-light-muted text-sm font-medium">Venue</p>
-                  <p className="text-dark-text font-semibold">{event.venue || "Venue not specified"}</p>
+                  <p className="text-gray-600 text-sm font-medium">Venue</p>
+                  <p className="text-gray-900 font-semibold">{event.venue || "Venue not specified"}</p>
                   {event.city && (
-                    <p className="text-light-muted text-sm">
+                    <p className="text-gray-700 text-sm">
                       {event.city}, {event.country}
                     </p>
                   )}
@@ -145,8 +145,8 @@ export default async function EventDetailPage({
                 {/* Price */}
                 {(event.priceMin || event.priceMax) && (
                   <div className="mb-4 pb-4 border-b border-light-border">
-                    <p className="text-light-muted text-sm font-medium">Price</p>
-                    <p className="text-dark-text font-semibold">
+                    <p className="text-gray-600 text-sm font-medium">Price</p>
+                    <p className="text-gray-900 font-semibold">
                       {event.priceMin && event.priceMax
                         ? `${event.priceCurrency || "€"}${event.priceMin} - ${event.priceCurrency || "€"}${event.priceMax}`
                         : event.priceMin
