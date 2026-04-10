@@ -12,104 +12,59 @@ function cleanSpecialCharacters(text: string): string {
     .replace(/…/g, "...");      // Ellipsis → three dots
 }
 
-// Convert URLs in text to clickable links and embed videos
+// Convert URLs in text to clickable links
 function LinkifyText({ text }: { text: string }) {
-  // First, clean up special characters that might have been stored wrong
-  let cleanedText = text
-    .replace(/[""]/g, '"')      // Smart quotes → straight quote
-    .replace(/['']/g, "'")      // Smart apostrophes → straight apostrophe
-    .replace(/–/g, "-")         // En dash → hyphen
-    .replace(/—/g, "-")         // Em dash → hyphen
-    .replace(/…/g, "...");      // Ellipsis → three dots
-
   // Fix URLs with spaces in them (e.g., "https: / / youtu.be / ...")
-  cleanedText = cleanedText.replace(/(\bhttps?):(\s+)\/(\s+)\//g, "$1://");
+  let cleanedText = text.replace(/(\bhttps?):(\s+)\/(\s+)\//g, "$1://");
 
-  // Pattern to match YouTube URLs (with or without spaces)
-  const youtubePattern = /(?:https?:\/\/)?(?:www\.)?(?:youtu\.be\/|youtube\.com\/watch\?v=)([a-zA-Z0-9_-]+)/g;
+  // Pattern to match plain URLs
   const plainUrlPattern = /https?:\/\/[^\s<>"]+/g;
   
   const parts: React.ReactNode[] = [];
   let lastIndex = 0;
   
-  // Find all YouTube URLs first
-  let youtubeMatch;
-  const youtubeMatches: Array<{ match: string; videoId: string; index: number }> = [];
-  youtubePattern.lastIndex = 0;
-  while ((youtubeMatch = youtubePattern.exec(cleanedText)) !== null) {
-    youtubeMatches.push({
-      match: youtubeMatch[0],
-      videoId: youtubeMatch[1],
-      index: youtubeMatch.index,
-    });
-  }
-  
   // Find all plain URLs
   let urlMatch;
-  const urlMatches: Array<{ match: string; index: number; isYoutube?: boolean }> = [];
+  const urlMatches: Array<{ match: string; index: number }> = [];
   plainUrlPattern.lastIndex = 0;
   while ((urlMatch = plainUrlPattern.exec(cleanedText)) !== null) {
-    // Check if this URL is a YouTube URL
-    const isYoutube = youtubeMatches.some(yt => yt.index === urlMatch.index);
     urlMatches.push({
       match: urlMatch[0],
       index: urlMatch.index,
-      isYoutube,
     });
   }
   
-  // Merge and sort matches
-  const allMatches = [...youtubeMatches, ...urlMatches.filter(u => !u.isYoutube)]
-    .sort((a, b) => a.index - b.index);
-  
   // Build parts
-  allMatches.forEach((match, i) => {
+  urlMatches.forEach((match, i) => {
     if (match.index > lastIndex) {
       parts.push(cleanedText.substring(lastIndex, match.index));
     }
     
-    if ('videoId' in match) {
-      // YouTube embed
-      parts.push(
-        <div key={`yt-${i}`} className="my-6 rounded-lg overflow-hidden">
-          <iframe
-            width="100%"
-            height="400"
-            src={`https://www.youtube.com/embed/${match.videoId}`}
-            title="YouTube video"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
-            className="w-full"
-          />
-        </div>
-      );
-    } else {
-      // Regular link
-      let url = match.match;
-      let trailing = "";
-      
-      if (url.endsWith(")") && !url.includes("(")) {
-        url = url.slice(0, -1);
-        trailing = ")";
-      } else if (url.endsWith(".") && !url.match(/\.\w+$/)) {
-        url = url.slice(0, -1);
-        trailing = ".";
-      }
-      
-      parts.push(
-        <span key={`link-${i}`}>
-          <a
-            href={url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-brand hover:text-brand-hover underline"
-          >
-            {url}
-          </a>
-          {trailing}
-        </span>
-      );
+    // Regular link
+    let url = match.match;
+    let trailing = "";
+    
+    if (url.endsWith(")") && !url.includes("(")) {
+      url = url.slice(0, -1);
+      trailing = ")";
+    } else if (url.endsWith(".") && !url.match(/\.\w+$/)) {
+      url = url.slice(0, -1);
+      trailing = ".";
     }
+    
+    parts.push(
+      <span key={`link-${i}`}>
+        <a
+          href={url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-brand hover:text-brand-hover underline"
+        >
+          {url}
+        </a>
+        {trailing}
+      </span>
+    );
     
     lastIndex = match.index + match.match.length;
   });
@@ -191,6 +146,24 @@ export default async function ArticlePage({
                 // Skip empty lines but preserve them visually
                 if (!cleanedLine.trim()) {
                   return <div key={i} className="h-2" />;
+                }
+                
+                // Check if line is a YouTube link
+                const youtubeMatch = cleanedLine.match(/(?:https?:\/\/)?(?:www\.)?(?:youtu\.be\/|youtube\.com\/watch\?v=)([a-zA-Z0-9_-]+)/);
+                if (youtubeMatch) {
+                  return (
+                    <div key={i} className="my-6 rounded-lg overflow-hidden">
+                      <iframe
+                        width="100%"
+                        height="400"
+                        src={`https://www.youtube.com/embed/${youtubeMatch[1]}`}
+                        title="YouTube video"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                        className="w-full"
+                      />
+                    </div>
+                  );
                 }
                 
                 // Check if line is part of a list
