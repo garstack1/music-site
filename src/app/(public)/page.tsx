@@ -80,11 +80,10 @@ export default async function HomePage() {
 
   return (
     <>
-      {/* Featured News & Events Carousel */}
+      {/* Featured News & Events Carousel - Full Width Black Background */}
       {featuredMixed.length > 0 && (
-        <section className="bg-light-bg">
+        <section className="bg-dark-bg w-full">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-            <h2 className="text-2xl font-bold mb-6">Featured</h2>
             <HomeFeaturedCarousel items={featuredMixed} />
           </div>
         </section>
