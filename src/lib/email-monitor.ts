@@ -71,6 +71,29 @@ function extractImages(text: string): string[] {
   return images;
 }
 
+function extractEmbeddedImages(source: string): string[] {
+  const images: string[] = [];
+  
+  // Find all MIME parts with Content-ID (inline images)
+  const mimePartRegex = /--[^\r\n]+\r\nContent-Type: image\/([^\s;]+)[\s\S]*?Content-Transfer-Encoding: base64\r\n(?:Content-ID: <([^>]+)>)?\r\n\r\n([\s\S]*?)\r\n(?=--[^\r\n]+(?:\r\n|--|$))/gi;
+  
+  let match;
+  while ((match = mimePartRegex.exec(source)) !== null) {
+    const imageType = match[1];
+    const contentId = match[2];
+    const base64Data = match[3].replace(/\r\n/g, "").trim();
+    
+    if (base64Data && base64Data.length > 0) {
+      // Create data URL
+      const mimeType = `image/${imageType}`;
+      const dataUrl = `data:${mimeType};base64,${base64Data}`;
+      images.push(dataUrl);
+    }
+  }
+  
+  return images;
+}
+
 function extractVideos(text: string): string[] {
   const videos: string[] = [];
   const ytRegex = /https?:\/\/(www\.)?(youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)[^\s<>"]+/gi;
@@ -94,13 +117,13 @@ function decodeHtmlEntities(str: string): string {
     "&gt;": ">",
     "&quot;": '"',
     "&apos;": "'",
-    "&rsquo;": "\u2019",
-    "&lsquo;": "\u2018",
-    "&rdquo;": "\u201D",
-    "&ldquo;": "\u201C",
-    "&mdash;": "\u2014",
-    "&ndash;": "\u2013",
-    "&hellip;": "\u2026",
+    "&rsquo;": "'",
+    "&lsquo;": "'",
+    "&rdquo;": '"',
+    "&ldquo;": '"',
+    "&mdash;": "—",
+    "&ndash;": "–",
+    "&hellip;": "...",
     "&bull;": "•",
     "&copy;": "©",
     "&reg;": "®",
@@ -116,15 +139,27 @@ function decodeHtmlEntities(str: string): string {
   decoded = decoded.replace(/&#x([0-9a-fA-F]+);/g, (_, hex) => String.fromCharCode(parseInt(hex, 16)));
   decoded = decoded.replace(/&#([0-9]+);/g, (_, dec) => String.fromCharCode(parseInt(dec, 10)));
 
+  // Clean up common Unicode characters that come from bad encoding
+  // Replace smart quotes and dashes with standard ASCII equivalents
+  decoded = decoded
+    .replace(/[""]/g, '"')      // Smart quotes → straight quote
+    .replace(/['']/g, "'")      // Smart apostrophes → straight apostrophe
+    .replace(/–/g, "-")         // En dash → hyphen
+    .replace(/—/g, "-")         // Em dash → hyphen
+    .replace(/…/g, "...")       // Ellipsis → three dots
+
   return decoded;
 }
 
 function stripHtml(html: string): string {
-  return html
+  let text = html
     .replace(/<br\s*\/?>/gi, "\n")
     .replace(/<\/p>/gi, "\n\n")
     .replace(/<\/div>/gi, "\n")
-    .replace(/<[^>]*>/g, "")
+    .replace(/<[^>]*>/g, "");
+  
+  // Decode entities
+  text = text
     .replace(/&#x([0-9a-fA-F]+);/g, (_, hex) => String.fromCharCode(parseInt(hex, 16)))
     .replace(/&#([0-9]+);/g, (_, dec) => String.fromCharCode(parseInt(dec, 10)))
     .replace(/&nbsp;/g, " ")
@@ -132,15 +167,23 @@ function stripHtml(html: string): string {
     .replace(/&lt;/g, "<")
     .replace(/&gt;/g, ">")
     .replace(/&quot;/g, '"')
-    .replace(/&rsquo;/g, "\u2019")
-    .replace(/&lsquo;/g, "\u2018")
-    .replace(/&rdquo;/g, "\u201C")
-    .replace(/&ldquo;/g, "\u201D")
-    .replace(/&mdash;/g, "\u2014")
-    .replace(/&ndash;/g, "\u2013")
-    .replace(/&hellip;/g, "\u2026")
+    .replace(/&rsquo;/g, "'")
+    .replace(/&lsquo;/g, "'")
+    .replace(/&rdquo;/g, '"')
+    .replace(/&ldquo;/g, '"')
+    .replace(/&mdash;/g, "-")
+    .replace(/&ndash;/g, "-")
+    .replace(/&hellip;/g, "...")
+    // Clean up smart quotes/dashes that might come through
+    .replace(/[""]/g, '"')
+    .replace(/['']/g, "'")
+    .replace(/–/g, "-")
+    .replace(/—/g, "-")
+    .replace(/…/g, "...")
     .replace(/\n{3,}/g, "\n\n")
     .trim();
+  
+  return text;
 }
 
 export interface EmailImportResult {
@@ -341,9 +384,12 @@ export async function checkEmails(): Promise<EmailImportResult> {
               .join(" ");
             
             const summary = extractSummary(content);
-            const images = extractImages(bodyText);
+            // Extract embedded images first (from email attachments), then HTTP images
+            const embeddedImages = extractEmbeddedImages(source);
+            const httpImages = extractImages(bodyText);
+            const allImages = [...embeddedImages, ...httpImages];
+            const featuredImage = allImages.length > 0 ? allImages[0] : null;
             const videos = extractVideos(bodyText);
-            const featuredImage = images.length > 0 ? images[0] : null;
 
             // Clean up URLs in content - remove angle brackets but keep the URLs
             let cleanedBody = content
