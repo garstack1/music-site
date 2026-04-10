@@ -220,15 +220,15 @@ export default async function EventDetailPage({
                             <p className="text-gray-700 mb-2 text-xs">{presale.description}</p>
                           )}
                           <p className="text-gray-600 text-xs mb-2">
-                            {new Date(presale.startDateTime).toLocaleDateString("en-IE", {
-                              day: "short",
+                            {new Date(presale.startDateTime).toLocaleString("en-IE", {
+                              day: "numeric",
                               month: "short",
                               hour: "2-digit",
                               minute: "2-digit",
                             })}{" "}
                             →{" "}
-                            {new Date(presale.endDateTime).toLocaleDateString("en-IE", {
-                              day: "short",
+                            {new Date(presale.endDateTime).toLocaleString("en-IE", {
+                              day: "numeric",
                               month: "short",
                               hour: "2-digit",
                               minute: "2-digit",
