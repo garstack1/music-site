@@ -87,13 +87,37 @@ function ShareButtons({ event }: { event: Event }) {
   );
 }
 
-function JustAnnouncedSection({ events }: { events: Event[] }) {
-  const [tab, setTab] = useState<"concerts" | "festivals">("concerts");
+interface Presale {
+  id: string;
+  name: string;
+  startDateTime: string;
+  endDateTime: string;
+}
+
+interface EventWithPresales extends Event {
+  presales?: Presale[];
+}
+
+function JustAnnouncedSection({ events, presaleEvents }: { events: Event[]; presaleEvents: EventWithPresales[] }) {
+  const [tab, setTab] = useState<"concerts" | "festivals" | "presales">("concerts");
   const concerts = events.filter((e) => e.type === "CONCERT");
   const festivals = events.filter((e) => e.type === "FESTIVAL");
-  const displayed = (tab === "concerts" ? concerts : festivals).slice(0, 20);
+  
+  // Filter presale events to only show those with at least one future presale
+  const now = new Date();
+  const activePresaleEvents = presaleEvents.filter((e) => {
+    if (!e.presales || e.presales.length === 0) return false;
+    // Check if at least one presale end date is in the future
+    return e.presales.some((p) => new Date(p.endDateTime) > now);
+  });
+  
+  const displayed = tab === "concerts" 
+    ? concerts.slice(0, 20) 
+    : tab === "festivals" 
+    ? festivals.slice(0, 20)
+    : activePresaleEvents.slice(0, 20);
 
-  if (concerts.length === 0 && festivals.length === 0) return null;
+  if (concerts.length === 0 && festivals.length === 0 && activePresaleEvents.length === 0) return null;
 
   return (
     <section className="bg-light-surface border-b border-light-border">
@@ -121,10 +145,20 @@ function JustAnnouncedSection({ events }: { events: Event[] }) {
                 Festivals ({festivals.length})
               </button>
             )}
+            {activePresaleEvents.length > 0 && (
+              <button
+                onClick={() => setTab("presales")}
+                className={`text-sm pb-1 transition-colors ${
+                  tab === "presales" ? "text-light-text border-b-2 border-brand" : "text-light-muted hover:text-light-text"
+                }`}
+              >
+                Pre-Sales ({activePresaleEvents.length})
+              </button>
+            )}
           </div>
         </div>
         {displayed.length > 0 ? (
-          <Carousel events={displayed} />
+          <Carousel events={displayed} showPresaleBadge={tab === "presales"} />
         ) : (
           <p className="text-light-muted text-sm">No {tab} just announced.</p>
         )}
@@ -133,7 +167,7 @@ function JustAnnouncedSection({ events }: { events: Event[] }) {
   );
 }
 
-function Carousel({ events }: { events: Event[] }) {
+function Carousel({ events, showPresaleBadge = false }: { events: (Event | EventWithPresales)[]; showPresaleBadge?: boolean }) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
@@ -173,7 +207,7 @@ function Carousel({ events }: { events: Event[] }) {
       <div ref={scrollRef} className="flex gap-4 overflow-x-auto snap-x snap-mandatory pb-2 items-stretch" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
         {events.map((event) => (
           <div key={event.id} className="snap-start shrink-0 w-[calc(33.333%-11px)] min-w-[280px] flex">
-            <EventCard event={event} />
+            <EventCard event={event} showPresaleBadge={showPresaleBadge} />
           </div>
         ))}
       </div>
@@ -204,10 +238,16 @@ function MonthGroup({ month, events, defaultOpen }: { month: string; events: Eve
   );
 }
 
-function EventCard({ event }: { event: Event }) {
-  const { push } = require("next/navigation").useRouter ? require("next/navigation").useRouter() : { push: () => {} };
+function EventCard({ event, showPresaleBadge = false }: { event: Event | EventWithPresales; showPresaleBadge?: boolean }) {
   const price = formatPrice(event);
   const time = formatTime(event.startTime);
+  
+  // Get next active presale if showing presale badge
+  const nextPresale = showPresaleBadge && 'presales' in event && event.presales ? 
+    event.presales
+      .filter((p) => new Date(p.endDateTime) > new Date())
+      .sort((a, b) => new Date(a.startDateTime).getTime() - new Date(b.startDateTime).getTime())[0]
+    : null;
 
   return (
     <div 
@@ -230,12 +270,37 @@ function EventCard({ event }: { event: Event }) {
           <div className="absolute top-2 left-2">
             <span className={`text-xs font-medium px-2 py-0.5 rounded ${event.type === "FESTIVAL" ? "bg-purple-600 text-white" : "bg-blue-600 text-white"}`}>{event.type}</span>
             {event.subscriberOnly && <span className="text-xs font-medium px-2 py-0.5 rounded bg-amber-500 text-white ml-1">Exclusive</span>}
+            {showPresaleBadge && <span className="text-xs font-medium px-2 py-0.5 rounded bg-green-600 text-white ml-1">Pre-Sale</span>}
           </div>
         </div>
       <div className="p-4 flex-1 flex flex-col">
         <h3 className="font-bold text-lg leading-tight">{event.name}</h3>
         {event.artist && event.artist !== event.name && <p className="text-light-muted text-sm mt-1">{event.artist}</p>}
-        {event.description && <p className="text-light-muted text-sm mt-2 line-clamp-2">{event.description}</p>}
+        
+        {/* Show presale info instead of description when in presale mode */}
+        {showPresaleBadge && nextPresale ? (
+          <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded text-sm">
+            <p className="font-medium text-green-800">{nextPresale.name}</p>
+            <p className="text-green-700 text-xs mt-1">
+              {new Date(nextPresale.startDateTime).toLocaleString("en-IE", {
+                day: "numeric",
+                month: "short",
+                hour: "2-digit",
+                minute: "2-digit",
+              })}
+              {" → "}
+              {new Date(nextPresale.endDateTime).toLocaleString("en-IE", {
+                day: "numeric",
+                month: "short",
+                hour: "2-digit",
+                minute: "2-digit",
+              })}
+            </p>
+          </div>
+        ) : (
+          event.description && <p className="text-light-muted text-sm mt-2 line-clamp-2">{event.description}</p>
+        )}
+        
         <div className="mt-3 space-y-1.5 text-sm">
           <div className="flex items-center gap-2">
             <svg className="w-4 h-4 text-brand shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
@@ -294,6 +359,7 @@ function EventCard({ event }: { event: Event }) {
 
 export default function EventsPage() {
   const [events, setEvents] = useState<Event[]>([]);
+  const [presaleEvents, setPresaleEvents] = useState<EventWithPresales[]>([]);
   const [genres, setGenres] = useState<string[]>([]);
   const [cities, setCities] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
@@ -309,6 +375,7 @@ export default function EventsPage() {
       .then((r) => r.json())
       .then((data) => {
         setEvents(data.events || []);
+        setPresaleEvents(data.presaleEvents || []);
         setGenres(data.genres || []);
         setCities(data.cities || []);
       })
@@ -523,8 +590,8 @@ export default function EventsPage() {
         </section>
       ) : (
         <>
-          {justAddedEvents.length > 0 && !hasActiveFilters && (
-            <JustAnnouncedSection events={justAddedEvents} />
+          {(justAddedEvents.length > 0 || presaleEvents.length > 0) && !hasActiveFilters && (
+            <JustAnnouncedSection events={justAddedEvents} presaleEvents={presaleEvents} />
           )}
 
           {thisWeekEvents.length > 0 && !hasActiveFilters && (
