@@ -379,6 +379,27 @@ model SiteSetting {
 }
 
 // ============================================
+// TICKETMASTER IMPORT LOGS
+// ============================================
+
+model ImportLog {
+  id            String    @id @default(cuid())
+  type          String    // "ticketmaster_auto", "ticketmaster_manual", "csv", "web_scrape"
+  status        String    // "success", "partial", "failed"
+  eventsCreated Int       @default(0)
+  eventsUpdated Int       @default(0)
+  eventsSkipped Int       @default(0)
+  errors        String?   // JSON array of error messages
+  duration      Int?      // Duration in milliseconds
+  triggeredBy   String?   // "cron", "manual", or user email
+  details       String?   // Additional details/notes
+  createdAt     DateTime  @default(now())
+
+  @@index([type])
+  @@index([createdAt])
+}
+
+// ============================================
 // FESTIVAL SEARCH / WEB SCRAPING
 // ============================================
 
