@@ -1,4 +1,4 @@
 {
   "installCommand": "npm install",
-  "buildCommand": "rm -rf node_modules/.prisma && npx prisma generate && npm run build"
+  "buildCommand": "cat prisma/schema.prisma | head -170 | tail -20 && rm -rf node_modules/.prisma && npx prisma generate --schema=./prisma/schema.prisma && npm run build"
 }
