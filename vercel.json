@@ -1,0 +1,4 @@
+{
+  "installCommand": "npm install",
+  "buildCommand": "rm -rf node_modules/.prisma && npx prisma generate && npm run build"
+}
