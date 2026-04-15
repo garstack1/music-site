@@ -13,9 +13,11 @@ const NI_CITIES = [
 ];
 const FESTIVAL_COUNTRIES = [
   "IE", "GB", "ES", "FR", "DE", "NL", "PT", "BE", "IT", "AT", "CH", "DK", "SE", "NO", "FI",
+  "PL", "CZ", "HU", "HR", "GR", "RO", "BG", "SK", "SI", "LT", "LV", "EE",
 ];
 
 const MUSIC_SEGMENT_ID = "KZFzniwnSyZfZ7v7nJ";
+const COMEDY_SEGMENT_ID = "KZFzniwnSyZfZ7v7na";
 
 interface TmPresale {
   name: string;
@@ -144,13 +146,13 @@ function getDescription(event: TmEvent): string | null {
   return null;
 }
 
-async function fetchPage(countryCode: string, page: number = 0): Promise<{ events: TmEvent[]; totalPages: number }> {
+async function fetchPage(countryCode: string, page: number = 0, segmentId: string = MUSIC_SEGMENT_ID): Promise<{ events: TmEvent[]; totalPages: number }> {
   if (!API_KEY) throw new Error("TICKETMASTER_API_KEY not set");
 
   const params = new URLSearchParams({
     apikey: API_KEY,
     countryCode,
-    segmentId: MUSIC_SEGMENT_ID,
+    segmentId,
     size: "100",
     page: page.toString(),
     sort: "date,asc",
@@ -181,11 +183,13 @@ async function importEvents(
   countryCode: string,
   maxPages: number,
   festivalOnly: boolean,
-  concertNiOnly: boolean
+  concertNiOnly: boolean,
+  segmentId: string = MUSIC_SEGMENT_ID
 ): Promise<ImportResult> {
+  const isComedy = segmentId === COMEDY_SEGMENT_ID;
   const result: ImportResult = {
     country: countryCode,
-    type: festivalOnly ? "Festivals" : "Concerts",
+    type: isComedy ? "Comedy" : (festivalOnly ? "Festivals" : "Concerts"),
     fetched: 0,
     imported: 0,
     updated: 0,
@@ -195,7 +199,7 @@ async function importEvents(
 
   try {
     for (let page = 0; page < maxPages; page++) {
-      const { events, totalPages } = await fetchPage(countryCode, page);
+      const { events, totalPages } = await fetchPage(countryCode, page, segmentId);
       result.fetched += events.length;
 
       for (const tm of events) {
@@ -340,11 +344,21 @@ async function importEvents(
 export async function importAllEvents(): Promise<ImportResult[]> {
   const results: ImportResult[] = [];
 
-  results.push(await importEvents("IE", 3, false, false));
-  results.push(await importEvents("GB", 3, false, true));
+  // Ireland Music Concerts - 10 pages (up to 1000 events)
+  results.push(await importEvents("IE", 10, false, false, MUSIC_SEGMENT_ID));
+  
+  // UK/NI Music Concerts - 5 pages (up to 500 events)
+  results.push(await importEvents("GB", 5, false, true, MUSIC_SEGMENT_ID));
 
+  // Ireland Comedy - 5 pages
+  results.push(await importEvents("IE", 5, false, false, COMEDY_SEGMENT_ID));
+  
+  // UK/NI Comedy - 3 pages
+  results.push(await importEvents("GB", 3, false, true, COMEDY_SEGMENT_ID));
+
+  // European Music Festivals - 5 pages each country (up to 500 per country)
   for (const country of FESTIVAL_COUNTRIES) {
-    results.push(await importEvents(country, 2, true, false));
+    results.push(await importEvents(country, 5, true, false, MUSIC_SEGMENT_ID));
     await new Promise((r) => setTimeout(r, 250));
   }
 
