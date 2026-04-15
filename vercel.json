@@ -1,4 +1,4 @@
 {
   "installCommand": "npm install",
-  "buildCommand": "sed -n '141,161p' prisma/schema.prisma && rm -rf node_modules/.prisma .next && npx prisma generate && npm run build"
+  "buildCommand": "rm -rf node_modules/.prisma && npx prisma generate && npm run build"
 }
