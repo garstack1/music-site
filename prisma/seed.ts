@@ -1,16 +1,10 @@
 import { PrismaClient } from "@prisma/client";
-import { PrismaPg } from "@prisma/adapter-pg";
-import pg from "pg";
 import bcrypt from "bcryptjs";
 import dotenv from "dotenv";
 
 dotenv.config();
 
-const pool = new pg.Pool({
-  connectionString: process.env.DATABASE_URL,
-});
-const adapter = new PrismaPg(pool);
-const prisma = new PrismaClient({ adapter });
+const prisma = new PrismaClient();
 
 async function main() {
   console.log("Seeding database...");
@@ -286,12 +280,10 @@ async function main() {
 
 main()
   .then(async () => {
-    await pool.end();
     await prisma.$disconnect();
   })
   .catch(async (e) => {
     console.error(e);
-    await pool.end();
     await prisma.$disconnect();
     process.exit(1);
   });
