@@ -10,10 +10,11 @@ on:
 jobs:
   import:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - name: Trigger Ticketmaster Import
         run: |
-          response=$(curl -s -w "\n%{http_code}" -X POST \
+          response=$(curl -s -L -w "\n%{http_code}" -X POST \
             "${{ secrets.SITE_URL }}/api/cron/ticketmaster" \
             -H "Content-Type: application/json" \
             -d '{"secret": "${{ secrets.CRON_SECRET }}"}')
