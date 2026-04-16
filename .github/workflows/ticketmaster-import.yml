@@ -17,7 +17,8 @@ jobs:
           response=$(curl -s -L -w "\n%{http_code}" -X POST \
             "${{ secrets.SITE_URL }}/api/cron/ticketmaster" \
             -H "Content-Type: application/json" \
-            -d '{"secret": "${{ secrets.CRON_SECRET }}"}')
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            -d '{"force": true, "triggeredBy": "github_action"}')
           
           http_code=$(echo "$response" | tail -n1)
           body=$(echo "$response" | sed '$d')
