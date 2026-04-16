@@ -365,6 +365,50 @@ export async function importAllEvents(): Promise<ImportResult[]> {
   return results;
 }
 
+// Import a single category - for use with GitHub Actions to avoid timeout
+export type ImportCategory = 
+  | "ie_concerts" 
+  | "gb_concerts" 
+  | "ie_comedy" 
+  | "gb_comedy" 
+  | `festivals_${string}`;
+
+export async function importCategory(category: ImportCategory): Promise<ImportResult> {
+  switch (category) {
+    case "ie_concerts":
+      return importEvents("IE", 10, false, false, MUSIC_SEGMENT_ID);
+    case "gb_concerts":
+      return importEvents("GB", 5, false, true, MUSIC_SEGMENT_ID);
+    case "ie_comedy":
+      return importEvents("IE", 5, false, false, COMEDY_SEGMENT_ID);
+    case "gb_comedy":
+      return importEvents("GB", 3, false, true, COMEDY_SEGMENT_ID);
+    default:
+      // Handle festivals_XX format
+      if (category.startsWith("festivals_")) {
+        const countryCode = category.replace("festivals_", "").toUpperCase();
+        if (FESTIVAL_COUNTRIES.includes(countryCode)) {
+          return importEvents(countryCode, 5, true, false, MUSIC_SEGMENT_ID);
+        }
+      }
+      throw new Error(`Unknown category: ${category}`);
+  }
+}
+
+// Get all categories for sequential import
+export function getAllCategories(): ImportCategory[] {
+  const categories: ImportCategory[] = [
+    "ie_concerts",
+    "gb_concerts", 
+    "ie_comedy",
+    "gb_comedy",
+  ];
+  for (const country of FESTIVAL_COUNTRIES) {
+    categories.push(`festivals_${country.toLowerCase()}` as ImportCategory);
+  }
+  return categories;
+}
+
 // Search for events by keyword and import them with presales
 export async function searchAndImportEvents(keyword: string, countryCode: string = "IE"): Promise<ImportResult> {
   if (!API_KEY) throw new Error("TICKETMASTER_API_KEY not set");

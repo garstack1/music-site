@@ -10,25 +10,50 @@ on:
 jobs:
   import:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 30
     steps:
-      - name: Trigger Ticketmaster Import
+      - name: Import IE Concerts
         run: |
-          response=$(curl -s -L -w "\n%{http_code}" -X POST \
-            "${{ secrets.SITE_URL }}/api/cron/ticketmaster" \
+          curl -s -L -X POST "${{ secrets.SITE_URL }}/api/cron/ticketmaster-category" \
             -H "Content-Type: application/json" \
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
-            -d '{"force": true, "triggeredBy": "github_action"}')
+            -d '{"category": "ie_concerts"}'
+          echo ""
           
-          http_code=$(echo "$response" | tail -n1)
-          body=$(echo "$response" | sed '$d')
-          
-          echo "Response: $body"
-          echo "HTTP Code: $http_code"
-          
-          if [ "$http_code" != "200" ]; then
-            echo "Import failed with status $http_code"
-            exit 1
-          fi
-          
-          echo "Import completed successfully"
+      - name: Import GB Concerts
+        run: |
+          curl -s -L -X POST "${{ secrets.SITE_URL }}/api/cron/ticketmaster-category" \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            -d '{"category": "gb_concerts"}'
+          echo ""
+
+      - name: Import IE Comedy
+        run: |
+          curl -s -L -X POST "${{ secrets.SITE_URL }}/api/cron/ticketmaster-category" \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            -d '{"category": "ie_comedy"}'
+          echo ""
+
+      - name: Import GB Comedy
+        run: |
+          curl -s -L -X POST "${{ secrets.SITE_URL }}/api/cron/ticketmaster-category" \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            -d '{"category": "gb_comedy"}'
+          echo ""
+
+      - name: Import EU Festivals
+        run: |
+          countries="ie gb es fr de nl pt be it at ch dk se no fi pl cz hu hr gr ro bg sk si lt lv ee"
+          for country in $countries; do
+            echo "Importing festivals_$country..."
+            curl -s -L -X POST "${{ secrets.SITE_URL }}/api/cron/ticketmaster-category" \
+              -H "Content-Type: application/json" \
+              -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+              -d "{\"category\": \"festivals_$country\"}"
+            echo ""
+            sleep 2
+          done
+          echo "All festivals imported"
