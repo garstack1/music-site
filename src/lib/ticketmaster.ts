@@ -367,7 +367,8 @@ export async function importAllEvents(): Promise<ImportResult[]> {
 
 // Import a single category - for use with GitHub Actions to avoid timeout
 export type ImportCategory = 
-  | "ie_concerts" 
+  | "ie_concerts_1" 
+  | "ie_concerts_2" 
   | "gb_concerts" 
   | "ie_comedy" 
   | "gb_comedy" 
@@ -375,30 +376,143 @@ export type ImportCategory =
 
 export async function importCategory(category: ImportCategory): Promise<ImportResult> {
   switch (category) {
-    case "ie_concerts":
-      return importEvents("IE", 10, false, false, MUSIC_SEGMENT_ID);
+    case "ie_concerts_1":
+      // Pages 0-2 (300 events)
+      return importEventsWithOffset("IE", 0, 3, false, false, MUSIC_SEGMENT_ID);
+    case "ie_concerts_2":
+      // Pages 3-5 (300 events)
+      return importEventsWithOffset("IE", 3, 3, false, false, MUSIC_SEGMENT_ID);
     case "gb_concerts":
-      return importEvents("GB", 5, false, true, MUSIC_SEGMENT_ID);
+      return importEvents("GB", 3, false, true, MUSIC_SEGMENT_ID);
     case "ie_comedy":
-      return importEvents("IE", 5, false, false, COMEDY_SEGMENT_ID);
+      return importEvents("IE", 3, false, false, COMEDY_SEGMENT_ID);
     case "gb_comedy":
-      return importEvents("GB", 3, false, true, COMEDY_SEGMENT_ID);
+      return importEvents("GB", 2, false, true, COMEDY_SEGMENT_ID);
     default:
       // Handle festivals_XX format
       if (category.startsWith("festivals_")) {
         const countryCode = category.replace("festivals_", "").toUpperCase();
         if (FESTIVAL_COUNTRIES.includes(countryCode)) {
-          return importEvents(countryCode, 5, true, false, MUSIC_SEGMENT_ID);
+          return importEvents(countryCode, 3, true, false, MUSIC_SEGMENT_ID);
         }
       }
       throw new Error(`Unknown category: ${category}`);
   }
 }
 
+// Import with page offset for splitting large imports
+async function importEventsWithOffset(
+  countryCode: string,
+  startPage: number,
+  numPages: number,
+  festivalOnly: boolean,
+  concertNiOnly: boolean,
+  segmentId: string = MUSIC_SEGMENT_ID
+): Promise<ImportResult> {
+  const isComedy = segmentId === COMEDY_SEGMENT_ID;
+  const result: ImportResult = {
+    country: countryCode,
+    type: isComedy ? "Comedy" : (festivalOnly ? "Festivals" : "Concerts"),
+    fetched: 0,
+    imported: 0,
+    updated: 0,
+    skipped: 0,
+    errors: [],
+  };
+
+  try {
+    for (let page = startPage; page < startPage + numPages; page++) {
+      const { events, totalPages } = await fetchPage(countryCode, page, segmentId);
+      if (page >= totalPages) break;
+      
+      result.fetched += events.length;
+
+      for (const tm of events) {
+        try {
+          const dateStr = tm.dates?.start?.localDate;
+          if (!dateStr) { result.skipped++; continue; }
+
+          const date = new Date(dateStr);
+          if (date < new Date()) { result.skipped++; continue; }
+
+          const venue = tm._embedded?.venues?.[0];
+          const artist = tm._embedded?.attractions?.[0]?.name || null;
+          const venueName = venue?.name || null;
+          const city = venue?.city?.name || null;
+          const country = venue?.country?.countryCode || countryCode;
+          const eventIsFestival = isFestival(tm);
+
+          if (festivalOnly && !eventIsFestival) { result.skipped++; continue; }
+          if (!festivalOnly && eventIsFestival) { result.skipped++; continue; }
+
+          if (concertNiOnly && !isNorthernIreland(city, venueName, country)) {
+            result.skipped++;
+            continue;
+          }
+
+          const eventType = eventIsFestival ? "FESTIVAL" : "CONCERT";
+          const fingerprint = generateFingerprint(tm.name, venueName, city, dateStr);
+          const socialLinks = getSocialLinks(tm);
+          const description = getDescription(tm);
+          const presalesData = tm.sales?.presales || [];
+
+          const eventData = {
+            name: tm.name,
+            type: eventType,
+            artist,
+            venue: venueName,
+            city,
+            country,
+            date,
+            endDate: tm.dates?.end?.localDate ? new Date(tm.dates.end.localDate) : null,
+            startTime: tm.dates?.start?.localTime || null,
+            ticketUrl: tm.url,
+            affiliateUrl: AFFILIATE_ID ? `${tm.url}?aid=${AFFILIATE_ID}` : null,
+            description,
+            imageUrl: getBestImage(tm),
+            genre: getGenre(tm),
+            subGenre: getSubGenre(tm),
+            priceMin: tm.priceRanges?.[0]?.min || null,
+            priceMax: tm.priceRanges?.[0]?.max || null,
+            priceCurrency: tm.priceRanges?.[0]?.currency || null,
+            source: "TICKETMASTER" as const,
+            sourceId: tm.id,
+            fingerprint,
+            latitude: venue?.location?.latitude ? parseFloat(venue.location.latitude) : null,
+            longitude: venue?.location?.longitude ? parseFloat(venue.location.longitude) : null,
+            ...socialLinks,
+          };
+
+          const existing = await prisma.event.findUnique({ where: { fingerprint } });
+
+          if (existing) {
+            await prisma.event.update({ where: { fingerprint }, data: eventData });
+            await syncPresales(existing.id, presalesData);
+            result.updated++;
+          } else {
+            const created = await prisma.event.create({ data: { ...eventData, active: true } });
+            await syncPresales(created.id, presalesData);
+            result.imported++;
+          }
+        } catch (err) {
+          result.errors.push(err instanceof Error ? err.message : "Unknown error");
+        }
+      }
+
+      await new Promise((r) => setTimeout(r, 250));
+    }
+  } catch (err) {
+    result.errors.push(err instanceof Error ? err.message : "Fetch error");
+  }
+
+  return result;
+}
+
 // Get all categories for sequential import
 export function getAllCategories(): ImportCategory[] {
   const categories: ImportCategory[] = [
-    "ie_concerts",
+    "ie_concerts_1",
+    "ie_concerts_2",
     "gb_concerts", 
     "ie_comedy",
     "gb_comedy",

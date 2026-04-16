@@ -12,12 +12,20 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - name: Import IE Concerts
+      - name: Import IE Concerts (part 1)
         run: |
           curl -s -L -X POST "${{ secrets.SITE_URL }}/api/cron/ticketmaster-category" \
             -H "Content-Type: application/json" \
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
-            -d '{"category": "ie_concerts"}'
+            -d '{"category": "ie_concerts_1"}'
+          echo ""
+          
+      - name: Import IE Concerts (part 2)
+        run: |
+          curl -s -L -X POST "${{ secrets.SITE_URL }}/api/cron/ticketmaster-category" \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            -d '{"category": "ie_concerts_2"}'
           echo ""
           
       - name: Import GB Concerts
