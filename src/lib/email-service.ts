@@ -56,7 +56,15 @@ async function sendViaConsole(options: EmailOptions): Promise<EmailResult> {
 // Resend provider
 async function sendViaResend(options: EmailOptions): Promise<EmailResult> {
   const apiKey = process.env.RESEND_API_KEY;
+  const fromEmail = process.env.EMAIL_FROM || "MUSICSITE <noreply@yourdomain.com>";
+  
+  console.log("📧 Resend: Attempting to send email");
+  console.log("📧 Resend: API Key exists:", !!apiKey);
+  console.log("📧 Resend: From:", fromEmail);
+  console.log("📧 Resend: To:", options.to);
+  
   if (!apiKey) {
+    console.log("📧 Resend: ERROR - No API key");
     return { success: false, error: "RESEND_API_KEY not configured" };
   }
 
@@ -68,7 +76,7 @@ async function sendViaResend(options: EmailOptions): Promise<EmailResult> {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: process.env.EMAIL_FROM || "MUSICSITE <noreply@yourdomain.com>",
+        from: fromEmail,
         to: options.to,
         subject: options.subject,
         html: options.html,
@@ -77,6 +85,8 @@ async function sendViaResend(options: EmailOptions): Promise<EmailResult> {
     });
 
     const data = await res.json();
+    console.log("📧 Resend: Response status:", res.status);
+    console.log("📧 Resend: Response data:", JSON.stringify(data));
     
     if (!res.ok) {
       return { success: false, error: data.message || "Failed to send" };
@@ -84,6 +94,7 @@ async function sendViaResend(options: EmailOptions): Promise<EmailResult> {
 
     return { success: true, messageId: data.id };
   } catch (error) {
+    console.log("📧 Resend: ERROR -", error);
     return { success: false, error: error instanceof Error ? error.message : "Unknown error" };
   }
 }
