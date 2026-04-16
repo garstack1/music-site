@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <!-- NightHawks Favicon - Red background with white crescent -->
+  <rect width="32" height="32" rx="6" fill="#DC2626"/>
+  <circle cx="16" cy="16" r="11" fill="white"/>
+  <circle cx="21" cy="13" r="9" fill="#DC2626"/>
+</svg>

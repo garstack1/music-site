@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 60" width="280" height="60">
+  <!-- NightHawks Logo - Dark background version -->
+  <!-- Crescent moon icon -->
+  <circle cx="28" cy="30" r="24" fill="#DC2626"/>
+  <circle cx="40" cy="24" r="19" fill="#0a0a0a"/>
+  
+  <!-- Text -->
+  <text x="65" y="40" font-family="system-ui, -apple-system, sans-serif" font-size="28" font-weight="500" fill="#f5f5f5">NIGHT<tspan fill="#DC2626">HAWKS</tspan></text>
+</svg>
