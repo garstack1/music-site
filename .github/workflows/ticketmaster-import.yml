@@ -1,0 +1,32 @@
+name: Ticketmaster Import
+
+on:
+  schedule:
+    # Run every 4 hours
+    - cron: '0 */4 * * *'
+  workflow_dispatch:
+    # Allow manual trigger from GitHub Actions tab
+
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Ticketmaster Import
+        run: |
+          response=$(curl -s -w "\n%{http_code}" -X POST \
+            "${{ secrets.SITE_URL }}/api/cron/ticketmaster" \
+            -H "Content-Type: application/json" \
+            -d '{"secret": "${{ secrets.CRON_SECRET }}"}')
+          
+          http_code=$(echo "$response" | tail -n1)
+          body=$(echo "$response" | sed '$d')
+          
+          echo "Response: $body"
+          echo "HTTP Code: $http_code"
+          
+          if [ "$http_code" != "200" ]; then
+            echo "Import failed with status $http_code"
+            exit 1
+          fi
+          
+          echo "Import completed successfully"
