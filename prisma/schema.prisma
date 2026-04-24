@@ -5,6 +5,7 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  directUrl  = env("DATABASE_DIRECT_URL")
 }
 
 // ============================================
@@ -430,4 +431,75 @@ model ContactSubmission {
   message   String
   read      Boolean  @default(false)
   createdAt DateTime @default(now())
+}
+
+
+
+// ============================================
+// EDITORIAL WORK
+// ============================================
+model EditorialPost {
+  id            String            @id @default(cuid())
+  title         String
+  slug          String            @unique
+  type          EditorialType
+  excerpt       String?
+  body          String
+  coverImage    String?
+  socialImage   String?
+  status        PostStatus        @default(DRAFT)
+  publishedAt   DateTime?
+  showInNews    Boolean           @default(false)
+  festivalTag   String?
+  socialPosts   SocialPost[]
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  @@index([type])
+  @@index([status])
+  @@index([publishedAt])
+  @@index([festivalTag])
+}
+
+model SocialPost {
+  id            String          @id @default(cuid())
+  post          EditorialPost   @relation(fields: [postId], references: [id], onDelete: Cascade)
+  postId        String
+  platform      SocialPlatform
+  caption       String
+  imageUrl      String?
+  scheduledAt   DateTime
+  sentAt        DateTime?
+  status        SocialStatus    @default(PENDING)
+  createdAt     DateTime        @default(now())
+
+  @@index([status])
+  @@index([scheduledAt])
+}
+
+enum EditorialType {
+  FESTIVAL_PREVIEW
+  FESTIVAL_UPDATE
+  FESTIVAL_RECAP
+  CONCERT_REVIEW
+  FEATURE
+}
+
+enum PostStatus {
+  DRAFT
+  SCHEDULED
+  PUBLISHED
+  ARCHIVED
+}
+
+enum SocialPlatform {
+  TWITTER
+  INSTAGRAM
+  FACEBOOK
+}
+
+enum SocialStatus {
+  PENDING
+  SENT
+  FAILED
 }
