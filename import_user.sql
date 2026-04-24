@@ -1,0 +1,3 @@
+INSERT INTO public."User" VALUES ('cmnkctw1d000iplhpybqkv2u0', 'garstack@gmail.com', 'Garrett Stack', '$2b$10$jcRkNNq1a7Vjfk9a1FlUn.jw.1gG6uBLWLmwbPr6fhwvJWrH9drpi', 'ADMIN', false, '2026-04-04 13:14:37.297', '2026-04-04 13:14:37.297', NULL);
+INSERT INTO public."User" VALUES ('cmnlpdun9000395hpbgj8l817', 'garstack+2@gmail.com', 'Test Reviewer 2', 'pending', 'PUBLIC', false, '2026-04-05 11:53:50.181', '2026-04-05 11:53:50.181', NULL);
+INSERT INTO public."User" VALUES ('cmnm33qfa0000kfhpefzy4jgb', 'garstack+1@gmail.com', 'Garrett Stack 1', '$2b$12$i0S3SkYT6gdvoo/P6Ooa6O/im5BYgxDLUFWtAh.x2cD1l3oTrel52', 'PUBLIC', false, '2026-04-05 18:17:52.774', '2026-04-05 18:17:52.774', NULL);

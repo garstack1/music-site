@@ -1,0 +1,15 @@
+INSERT INTO public."SavedEvent" VALUES ('cmnm33qn10001kfhp1yeghv8c', 'cmnm33qfa0000kfhpefzy4jgb', 'cmnkctw39000uplhpbc9wc6zw', '2026-04-05 18:17:53.053');
+INSERT INTO public."SavedEvent" VALUES ('cmnm33qn10002kfhpmxxxqbzw', 'cmnm33qfa0000kfhpefzy4jgb', 'cmnkctw3l000xplhpli6vtn8x', '2026-04-05 18:17:53.053');
+INSERT INTO public."SavedEvent" VALUES ('cmnm33qn10003kfhpw3lkp045', 'cmnm33qfa0000kfhpefzy4jgb', 'cmnkctw3q000yplhp6knkq2ri', '2026-04-05 18:17:53.053');
+INSERT INTO public."SavedEvent" VALUES ('cmnt8hat30003pqhp6o0e0pup', 'cmnkctw1d000iplhpybqkv2u0', 'cmns08nsn0006eihpszmqmtdj', '2026-04-10 18:22:47.031');
+INSERT INTO public."SavedEvent" VALUES ('cmntaafl700011whpg6ik6xns', 'cmnkctw1d000iplhpybqkv2u0', 'cmns08ntr000geihpf5sizmhx', '2026-04-10 19:13:25.867');
+INSERT INTO public."SavedEvent" VALUES ('cmnu9f3gy00c88whp0a39zc9t', 'cmnkctw1d000iplhpybqkv2u0', 'cmnm78290008ep4hpo8v3rl52', '2026-04-11 11:36:50.002');
+INSERT INTO public."SavedEvent" VALUES ('cmnu9f5qi00c98whpmw82xagy', 'cmnkctw1d000iplhpybqkv2u0', 'cmns08qer000neihpkmbf9dt7', '2026-04-11 11:36:52.938');
+INSERT INTO public."SavedEvent" VALUES ('cmnu9fdic00ca8whpe9equsw7', 'cmnkctw1d000iplhpybqkv2u0', 'cmns08qen000meihpfp0s62nw', '2026-04-11 11:37:03.012');
+INSERT INTO public."SavedEvent" VALUES ('cmnuwn9ol006hwrhptffnopz0', 'cmnkctw1d000iplhpybqkv2u0', 'cmntcefe60006amhpju96vcns', '2026-04-11 22:27:02.469');
+INSERT INTO public."SavedEvent" VALUES ('cmnuwnc1b006iwrhp9foljydl', 'cmnkctw1d000iplhpybqkv2u0', 'cmnm77yr60036p4hphn8m24d6', '2026-04-11 22:27:05.519');
+INSERT INTO public."SavedEvent" VALUES ('cmnuwncro006jwrhpg27zow6d', 'cmnkctw1d000iplhpybqkv2u0', 'cmnm77yre0039p4hpr9uz0kdj', '2026-04-11 22:27:06.468');
+INSERT INTO public."SavedEvent" VALUES ('cmnux5wyp007kwrhppj7wphol', 'cmnkctw1d000iplhpybqkv2u0', 'cmnm77ytl003up4hptwjb08nb', '2026-04-11 22:41:32.449');
+INSERT INTO public."SavedEvent" VALUES ('cmnvm5me90000wvhplng0zvqf', 'cmnkctw1d000iplhpybqkv2u0', 'cmnm77zi2005gp4hpjjvhff16', '2026-04-12 10:21:09.153');
+INSERT INTO public."SavedEvent" VALUES ('cmnvm5qn80001wvhplnlgsvt0', 'cmnkctw1d000iplhpybqkv2u0', 'cmnm77zjc005rp4hpqnq8g9zr', '2026-04-12 10:21:14.66');
+INSERT INTO public."SavedEvent" VALUES ('cmnvm5sus0002wvhpziql5tfx', 'cmnkctw1d000iplhpybqkv2u0', 'cmnm77zk00060p4hpexuuzh3j', '2026-04-12 10:21:17.524');

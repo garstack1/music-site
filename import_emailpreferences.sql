@@ -1,0 +1,1 @@
+INSERT INTO public."EmailPreferences" VALUES ('cmnteqyyo0001efhpor1tyjol', 'cmnkctw1d000iplhpybqkv2u0', 'DAILY', NULL, true, true, true, true, NULL, NULL, 'cmnteqyyo0002efhp4xblwm36', '2026-04-10 21:18:15.936', '2026-04-10 21:19:10.393');

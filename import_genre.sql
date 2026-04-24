@@ -1,0 +1,18 @@
+INSERT INTO public."Genre" VALUES ('cmnkctvy10000plhpg8phku13', 'Rock', 'rock');
+INSERT INTO public."Genre" VALUES ('cmnkctvy80001plhpq5gv7x7t', 'Indie', 'indie');
+INSERT INTO public."Genre" VALUES ('cmnkctvyb0002plhpafmn4l6k', 'Electronic', 'electronic');
+INSERT INTO public."Genre" VALUES ('cmnkctvye0003plhpz7lkcp0j', 'Hip Hop', 'hip-hop');
+INSERT INTO public."Genre" VALUES ('cmnkctvyh0004plhp2z6mkq2m', 'Pop', 'pop');
+INSERT INTO public."Genre" VALUES ('cmnkctvyj0005plhpnwl0vzgz', 'Metal', 'metal');
+INSERT INTO public."Genre" VALUES ('cmnkctvym0006plhpr45ju7ad', 'Folk', 'folk');
+INSERT INTO public."Genre" VALUES ('cmnkctvyo0007plhppxtprw4d', 'Jazz', 'jazz');
+INSERT INTO public."Genre" VALUES ('cmnkctvys0008plhpgos0q0hf', 'Classical', 'classical');
+INSERT INTO public."Genre" VALUES ('cmnkctvyu0009plhp15nctuig', 'R&B', 'r-b');
+INSERT INTO public."Genre" VALUES ('cmnkctvyx000aplhp19hox1l0', 'Punk', 'punk');
+INSERT INTO public."Genre" VALUES ('cmnkctvz0000bplhpsgux4zcy', 'Country', 'country');
+INSERT INTO public."Genre" VALUES ('cmnkctvz3000cplhp3wq6x2c8', 'Blues', 'blues');
+INSERT INTO public."Genre" VALUES ('cmnkctvz6000dplhpmmzyvvsp', 'Reggae', 'reggae');
+INSERT INTO public."Genre" VALUES ('cmnkctvz8000eplhpvlgkjb9r', 'Soul', 'soul');
+INSERT INTO public."Genre" VALUES ('cmnkctvza000fplhpmsrbh46y', 'Dance', 'dance');
+INSERT INTO public."Genre" VALUES ('cmnkctvzc000gplhphop3nsl7', 'Alternative', 'alternative');
+INSERT INTO public."Genre" VALUES ('cmnkctvzd000hplhpbyzht9ur', 'World Music', 'world-music');

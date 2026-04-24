@@ -1,0 +1,15 @@
+INSERT INTO public."SiteSetting" VALUES ('cmnkctw4c0014plhpimynfdka', 'site_name', 'Music Site');
+INSERT INTO public."SiteSetting" VALUES ('cmnkctw4g0015plhpb66kx3eg', 'site_description', 'Music news, events and concert reviews');
+INSERT INTO public."SiteSetting" VALUES ('cmnkctw4i0016plhpu03tdt24', 'ticketmaster_country_concerts', 'IE,GB');
+INSERT INTO public."SiteSetting" VALUES ('cmnkctw4j0017plhpx9rwniax', 'ticketmaster_country_festivals', 'IE,GB,ES,FR,DE,NL,BE,PT,IT,AT,SE,NO,DK,FI');
+INSERT INTO public."SiteSetting" VALUES ('cmnkctw4l0018plhpep4wxzuq', 'rss_poll_interval_minutes', '30');
+INSERT INTO public."SiteSetting" VALUES ('cmnkctw4n0019plhpniu8apy7', 'csv_sync_interval_minutes', '60');
+INSERT INTO public."SiteSetting" VALUES ('cmnteqred0000efhpfm0k23cc', 'email_preferences_enabled', 'false');
+INSERT INTO public."SiteSetting" VALUES ('cmnu8ezc000008whpn6jvyhxl', 'ticketmaster_auto_enabled', 'true');
+INSERT INTO public."SiteSetting" VALUES ('cmnu8ezcr00018whp29xtkdlk', 'ticketmaster_auto_frequency', 'daily');
+INSERT INTO public."SiteSetting" VALUES ('cmnu8ezcu00028whppkyewsrl', 'ticketmaster_auto_hour', '3');
+INSERT INTO public."SiteSetting" VALUES ('cmnu8ezcw00038whpvtlwm51j', 'ticketmaster_auto_day', '0');
+INSERT INTO public."SiteSetting" VALUES ('cmnu8fri9006a8whpjj5x51k1', 'ticketmaster_auto_last_run', '2026-04-11T11:10:00.594Z');
+INSERT INTO public."SiteSetting" VALUES ('cmnls6noy0000dhhplj47g08p', 'stats_section_enabled', 'false');
+INSERT INTO public."SiteSetting" VALUES ('cmnm9ys9f0000t9hp85tijs45', 'competitions_enabled', 'false');
+INSERT INTO public."SiteSetting" VALUES ('cmnlp2jgd0000fxhpfz8n86qy', 'public_reviews_enabled', 'false');
