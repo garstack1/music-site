@@ -1,0 +1,51 @@
+# Ticketmaster Direct Import
+# 
+# This workflow runs the import script directly in GitHub Actions,
+# bypassing Vercel completely to avoid timeout issues.
+#
+# SCHEDULE: Runs every 6 hours by default
+# To change the schedule, edit the cron expression below:
+#   - '0 */6 * * *'  = Every 6 hours
+#   - '0 */4 * * *'  = Every 4 hours  
+#   - '0 0 * * *'    = Once daily at midnight UTC
+#   - '0 8,20 * * *' = Twice daily at 8am and 8pm UTC
+#
+# You can also run this manually from the Actions tab in GitHub.
+
+name: Ticketmaster Import
+
+on:
+  schedule:
+    - cron: '0 */6 * * *'  # Every 6 hours
+  workflow_dispatch:  # Allow manual trigger from GitHub UI
+
+jobs:
+  import-events:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60  # 1 hour max (plenty of time)
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma client
+        run: npx prisma generate
+
+      - name: Run Ticketmaster import
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          TICKETMASTER_API_KEY: ${{ secrets.TICKETMASTER_API_KEY }}
+          TICKETMASTER_AFFILIATE_ID: ${{ secrets.TICKETMASTER_AFFILIATE_ID }}
+        run: npx tsx scripts/import-events.ts
+
+      - name: Summary
+        run: echo "✅ Ticketmaster import completed at $(date)"
