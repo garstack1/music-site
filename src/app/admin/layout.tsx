@@ -36,6 +36,9 @@ export default function AdminLayout({
                 <Link href="/admin/event-sources" className="text-dark-muted hover:text-dark-text text-xs transition-colors">
                   Event Sources
                 </Link>
+                <Link href="/admin/editorial" className="text-dark-muted hover:text-dark-text text-xs transition-colors">
+                  Editorial
+                </Link>
                 <Link href="/admin/reviews" className="text-dark-muted hover:text-dark-text text-xs transition-colors">
                   Reviews
                 </Link>
