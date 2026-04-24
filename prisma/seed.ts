@@ -49,6 +49,10 @@ async function main() {
     { name: "Pitchfork", url: "https://pitchfork.com/feed/feed-news/rss" },
     { name: "NME", url: "https://www.nme.com/news/music/feed" },
     { name: "RTE Entertainment", url: "https://www.rte.ie/feeds/rss/?index=/entertainment/" },
+    { name: "Far Out Magazine", url: "https://faroutmagazine.co.uk/feed/" },
+    { name: "Rolling Stone", url: "https://www.rollingstone.com/music/music-news/feed/" },
+    { name: "Brooklyn Vegan", url: "https://www.brooklynvegan.com/feed/" },
+    { name: "Stereogum", url: "https://www.stereogum.com/feed/" },
   ];
 
   for (const feed of feeds) {
