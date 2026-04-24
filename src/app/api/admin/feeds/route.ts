@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const { name, url, sourceLabel } = await request.json();
+    const { name, url, sourceLabel, filterKeywords, filterMode } = await request.json();
 
     if (!name || !url) {
       return NextResponse.json(
@@ -53,23 +53,12 @@ export async function POST(request: NextRequest) {
       data: { 
         name, 
         url, 
-        active: true 
+        active: true,
+        sourceLabel: sourceLabel || null,
+        filterKeywords: filterKeywords || null,
+        filterMode: filterMode || "none",
       },
     });
-
-    // Update with sourceLabel if provided and column exists
-    if (sourceLabel) {
-      try {
-        const updated = await prisma.rssFeed.update({
-          where: { id: feed.id },
-          data: { sourceLabel },
-        });
-        return NextResponse.json({ feed: updated }, { status: 201 });
-      } catch {
-        // sourceLabel column might not exist yet, return feed without it
-        return NextResponse.json({ feed }, { status: 201 });
-      }
-    }
 
     return NextResponse.json({ feed }, { status: 201 });
   } catch (error) {

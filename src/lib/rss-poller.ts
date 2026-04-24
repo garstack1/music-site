@@ -163,14 +163,20 @@ export interface PollResult {
   feedName: string;
   newArticles: number;
   skipped: number;
+  filtered: number;
   errors: string[];
+}
+
+function matchesKeywords(text: string, keywords: string[]): boolean {
+  const lowerText = text.toLowerCase();
+  return keywords.some(keyword => lowerText.includes(keyword.toLowerCase().trim()));
 }
 
 export async function pollFeed(feedId: string): Promise<PollResult> {
   const feed = await prisma.rssFeed.findUnique({ where: { id: feedId } });
 
   if (!feed) {
-    return { feedId, feedName: "Unknown", newArticles: 0, skipped: 0, errors: ["Feed not found"] };
+    return { feedId, feedName: "Unknown", newArticles: 0, skipped: 0, filtered: 0, errors: ["Feed not found"] };
   }
 
   const result: PollResult = {
@@ -178,8 +184,15 @@ export async function pollFeed(feedId: string): Promise<PollResult> {
     feedName: feed.name,
     newArticles: 0,
     skipped: 0,
+    filtered: 0,
     errors: [],
   };
+
+  // Parse filter keywords
+  const filterKeywords = feed.filterKeywords
+    ? feed.filterKeywords.split(",").map(k => k.trim()).filter(k => k.length > 0)
+    : [];
+  const filterMode = feed.filterMode || "none";
 
   try {
     const parsed = await parser.parseURL(feed.url);
@@ -206,6 +219,25 @@ export async function pollFeed(feedId: string): Promise<PollResult> {
         if (!title) {
           result.skipped++;
           continue;
+        }
+
+        // Apply keyword filter
+        if (filterKeywords.length > 0 && filterMode !== "none") {
+          const encoded = (item as Record<string, unknown>)["content:encoded"] as string | undefined;
+          const contentText = stripHtml(encoded || item.content || item.contentSnippet || "");
+          const fullText = `${title} ${contentText}`;
+          const matches = matchesKeywords(fullText, filterKeywords);
+
+          if (filterMode === "include" && !matches) {
+            // Include mode: skip articles that don't match
+            result.filtered++;
+            continue;
+          }
+          if (filterMode === "exclude" && matches) {
+            // Exclude mode: skip articles that do match
+            result.filtered++;
+            continue;
+          }
         }
 
         let slug = slugify(title);

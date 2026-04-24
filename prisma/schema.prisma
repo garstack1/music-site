@@ -115,14 +115,16 @@ model ProcessedEmail {
 // ============================================
 
 model RssFeed {
-  id          String        @id @default(cuid())
-  name        String
-  url         String        @unique
-  sourceLabel String?       // Custom label for articles from this feed (e.g., "via NME")
-  active      Boolean       @default(true)
-  lastPolled  DateTime?
-  createdAt   DateTime      @default(now())
-  articles    NewsArticle[]
+  id             String        @id @default(cuid())
+  name           String
+  url            String        @unique
+  sourceLabel    String?       // Custom label for articles from this feed (e.g., "via NME")
+  active         Boolean       @default(true)
+  filterKeywords String?       // Comma-separated keywords to filter articles (e.g., "music,concert,album,tour")
+  filterMode     String        @default("none") // "none" = no filter, "include" = only matching, "exclude" = skip matching
+  lastPolled     DateTime?
+  createdAt      DateTime      @default(now())
+  articles       NewsArticle[]
 }
 
 // ============================================

@@ -7,6 +7,8 @@ interface RssFeed {
   name: string;
   url: string;
   sourceLabel?: string;
+  filterKeywords?: string;
+  filterMode: string;
   active: boolean;
   lastPolled: string | null;
   createdAt: string;
@@ -17,6 +19,7 @@ interface PollResult {
   feedName: string;
   newArticles: number;
   skipped: number;
+  filtered: number;
   errors: string[];
 }
 
@@ -26,11 +29,14 @@ export default function AdminFeedsPage() {
   const [name, setName] = useState("");
   const [url, setUrl] = useState("");
   const [sourceLabel, setSourceLabel] = useState("");
+  const [filterKeywords, setFilterKeywords] = useState("");
+  const [filterMode, setFilterMode] = useState("none");
   const [adding, setAdding] = useState(false);
   const [error, setError] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [polling, setPolling] = useState<string | null>(null);
   const [pollResults, setPollResults] = useState<PollResult[] | null>(null);
+  const [editingFeed, setEditingFeed] = useState<RssFeed | null>(null);
 
   const fetchFeeds = useCallback(async () => {
     try {
@@ -57,7 +63,7 @@ export default function AdminFeedsPage() {
       const res = await fetch("/api/admin/feeds", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, url, sourceLabel }),
+        body: JSON.stringify({ name, url, sourceLabel, filterKeywords, filterMode }),
       });
 
       const data = await res.json();
@@ -71,6 +77,8 @@ export default function AdminFeedsPage() {
       setName("");
       setUrl("");
       setSourceLabel("");
+      setFilterKeywords("");
+      setFilterMode("none");
       setShowForm(false);
       fetchFeeds();
     } catch {
@@ -78,6 +86,57 @@ export default function AdminFeedsPage() {
     } finally {
       setAdding(false);
     }
+  }
+
+  async function handleEditSave(e: React.FormEvent) {
+    e.preventDefault();
+    if (!editingFeed) return;
+    setError("");
+
+    try {
+      const res = await fetch(`/api/admin/feeds/${editingFeed.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name,
+          sourceLabel,
+          filterKeywords,
+          filterMode,
+        }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        setError(data.error || "Failed to update feed");
+        return;
+      }
+
+      setEditingFeed(null);
+      setName("");
+      setSourceLabel("");
+      setFilterKeywords("");
+      setFilterMode("none");
+      fetchFeeds();
+    } catch {
+      setError("Network error");
+    }
+  }
+
+  function startEdit(feed: RssFeed) {
+    setEditingFeed(feed);
+    setName(feed.name);
+    setSourceLabel(feed.sourceLabel || "");
+    setFilterKeywords(feed.filterKeywords || "");
+    setFilterMode(feed.filterMode || "none");
+    setShowForm(false);
+  }
+
+  function cancelEdit() {
+    setEditingFeed(null);
+    setName("");
+    setSourceLabel("");
+    setFilterKeywords("");
+    setFilterMode("none");
   }
 
   async function handleToggle(id: string, currentActive: boolean) {
@@ -189,13 +248,16 @@ export default function AdminFeedsPage() {
                   {r.newArticles > 0 && (
                     <span className="text-green-400 text-xs">{r.newArticles} new</span>
                   )}
+                  {r.filtered > 0 && (
+                    <span className="text-yellow-400 text-xs">{r.filtered} filtered</span>
+                  )}
                   {r.skipped > 0 && (
                     <span className="text-dark-muted text-xs">{r.skipped} skipped</span>
                   )}
                   {r.errors.length > 0 && (
                     <span className="text-red-400 text-xs">{r.errors.length} errors</span>
                   )}
-                  {r.newArticles === 0 && r.errors.length === 0 && (
+                  {r.newArticles === 0 && r.filtered === 0 && r.errors.length === 0 && (
                     <span className="text-dark-muted text-xs">Up to date</span>
                   )}
                 </div>
@@ -246,7 +308,7 @@ export default function AdminFeedsPage() {
 
             <div>
               <label htmlFor="sourceLabel" className="block text-dark-muted text-xs mb-1.5">
-                Source Label <span className="text-dark-muted">(e.g., "via Pitchfork")</span>
+                Source Label <span className="text-dark-muted">(e.g., &quot;via Pitchfork&quot;)</span>
               </label>
               <input
                 id="sourceLabel"
@@ -257,6 +319,48 @@ export default function AdminFeedsPage() {
                 className="w-full px-3 py-2 bg-dark-bg border border-dark-border text-dark-text text-sm placeholder-dark-muted focus:outline-none focus:border-brand transition-colors"
               />
             </div>
+
+            <div className="border-t border-dark-border pt-4 mt-4">
+              <h3 className="text-dark-text text-xs font-semibold mb-3">Content Filtering (Optional)</h3>
+              
+              <div className="mb-3">
+                <label htmlFor="filterMode" className="block text-dark-muted text-xs mb-1.5">
+                  Filter Mode
+                </label>
+                <select
+                  id="filterMode"
+                  value={filterMode}
+                  onChange={(e) => setFilterMode(e.target.value)}
+                  className="w-full px-3 py-2 bg-dark-bg border border-dark-border text-dark-text text-sm focus:outline-none focus:border-brand transition-colors"
+                >
+                  <option value="none">No filtering - import all articles</option>
+                  <option value="include">Include only - import articles matching keywords</option>
+                  <option value="exclude">Exclude - skip articles matching keywords</option>
+                </select>
+              </div>
+
+              {filterMode !== "none" && (
+                <div>
+                  <label htmlFor="filterKeywords" className="block text-dark-muted text-xs mb-1.5">
+                    Keywords <span className="text-dark-muted">(comma-separated)</span>
+                  </label>
+                  <input
+                    id="filterKeywords"
+                    type="text"
+                    value={filterKeywords}
+                    onChange={(e) => setFilterKeywords(e.target.value)}
+                    placeholder="e.g. music, concert, album, tour, band, festival, comedy, comedian"
+                    className="w-full px-3 py-2 bg-dark-bg border border-dark-border text-dark-text text-sm placeholder-dark-muted focus:outline-none focus:border-brand transition-colors"
+                  />
+                  <p className="text-dark-muted text-xs mt-1">
+                    {filterMode === "include" 
+                      ? "Only articles containing at least one of these keywords will be imported."
+                      : "Articles containing any of these keywords will be skipped."}
+                  </p>
+                </div>
+              )}
+            </div>
+
             <button
               type="submit"
               disabled={adding}
@@ -264,6 +368,99 @@ export default function AdminFeedsPage() {
             >
               {adding ? "Adding..." : "Add Feed"}
             </button>
+          </form>
+        </div>
+      )}
+
+      {/* Edit Feed Modal */}
+      {editingFeed && (
+        <div className="bg-dark-surface border border-brand p-5 mb-6">
+          <h2 className="text-dark-text text-sm font-semibold mb-4">Edit Feed: {editingFeed.name}</h2>
+          <form onSubmit={handleEditSave} className="space-y-4">
+            <div>
+              <label htmlFor="editName" className="block text-dark-muted text-xs mb-1.5">
+                Feed Name
+              </label>
+              <input
+                id="editName"
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
+                className="w-full px-3 py-2 bg-dark-bg border border-dark-border text-dark-text text-sm focus:outline-none focus:border-brand transition-colors"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="editSourceLabel" className="block text-dark-muted text-xs mb-1.5">
+                Source Label
+              </label>
+              <input
+                id="editSourceLabel"
+                type="text"
+                value={sourceLabel}
+                onChange={(e) => setSourceLabel(e.target.value)}
+                placeholder="Leave empty to auto-generate"
+                className="w-full px-3 py-2 bg-dark-bg border border-dark-border text-dark-text text-sm placeholder-dark-muted focus:outline-none focus:border-brand transition-colors"
+              />
+            </div>
+
+            <div className="border-t border-dark-border pt-4 mt-4">
+              <h3 className="text-dark-text text-xs font-semibold mb-3">Content Filtering</h3>
+              
+              <div className="mb-3">
+                <label htmlFor="editFilterMode" className="block text-dark-muted text-xs mb-1.5">
+                  Filter Mode
+                </label>
+                <select
+                  id="editFilterMode"
+                  value={filterMode}
+                  onChange={(e) => setFilterMode(e.target.value)}
+                  className="w-full px-3 py-2 bg-dark-bg border border-dark-border text-dark-text text-sm focus:outline-none focus:border-brand transition-colors"
+                >
+                  <option value="none">No filtering - import all articles</option>
+                  <option value="include">Include only - import articles matching keywords</option>
+                  <option value="exclude">Exclude - skip articles matching keywords</option>
+                </select>
+              </div>
+
+              {filterMode !== "none" && (
+                <div>
+                  <label htmlFor="editFilterKeywords" className="block text-dark-muted text-xs mb-1.5">
+                    Keywords <span className="text-dark-muted">(comma-separated)</span>
+                  </label>
+                  <input
+                    id="editFilterKeywords"
+                    type="text"
+                    value={filterKeywords}
+                    onChange={(e) => setFilterKeywords(e.target.value)}
+                    placeholder="e.g. music, concert, album, tour, band, festival"
+                    className="w-full px-3 py-2 bg-dark-bg border border-dark-border text-dark-text text-sm placeholder-dark-muted focus:outline-none focus:border-brand transition-colors"
+                  />
+                  <p className="text-dark-muted text-xs mt-1">
+                    {filterMode === "include" 
+                      ? "Only articles containing at least one of these keywords will be imported."
+                      : "Articles containing any of these keywords will be skipped."}
+                  </p>
+                </div>
+              )}
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                type="submit"
+                className="bg-brand hover:bg-brand-hover text-white px-4 py-2 text-sm font-medium transition-colors"
+              >
+                Save Changes
+              </button>
+              <button
+                type="button"
+                onClick={cancelEdit}
+                className="bg-dark-bg border border-dark-border hover:border-dark-muted text-dark-text px-4 py-2 text-sm font-medium transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
           </form>
         </div>
       )}
@@ -278,7 +475,8 @@ export default function AdminFeedsPage() {
             <thead>
               <tr className="border-b border-dark-border">
                 <th className="text-left text-dark-muted text-xs font-medium px-4 py-3">Name</th>
-                <th className="text-left text-dark-muted text-xs font-medium px-4 py-3 hidden md:table-cell">URL</th>
+                <th className="text-left text-dark-muted text-xs font-medium px-4 py-3 hidden lg:table-cell">URL</th>
+                <th className="text-center text-dark-muted text-xs font-medium px-4 py-3 hidden md:table-cell">Filter</th>
                 <th className="text-center text-dark-muted text-xs font-medium px-4 py-3">Articles</th>
                 <th className="text-center text-dark-muted text-xs font-medium px-4 py-3">Status</th>
                 <th className="text-center text-dark-muted text-xs font-medium px-4 py-3 hidden md:table-cell">Last Polled</th>
@@ -291,8 +489,20 @@ export default function AdminFeedsPage() {
                   <td className="px-4 py-3">
                     <span className="text-dark-text text-sm">{feed.name}</span>
                   </td>
-                  <td className="px-4 py-3 hidden md:table-cell">
+                  <td className="px-4 py-3 hidden lg:table-cell">
                     <span className="text-dark-muted text-xs truncate max-w-xs block">{feed.url}</span>
+                  </td>
+                  <td className="px-4 py-3 text-center hidden md:table-cell">
+                    {feed.filterMode === "none" ? (
+                      <span className="text-dark-muted text-xs">None</span>
+                    ) : (
+                      <span 
+                        className={`text-xs ${feed.filterMode === "include" ? "text-green-400" : "text-yellow-400"}`}
+                        title={feed.filterKeywords || ""}
+                      >
+                        {feed.filterMode === "include" ? "Include" : "Exclude"}
+                      </span>
+                    )}
                   </td>
                   <td className="px-4 py-3 text-center">
                     <span className="text-dark-text text-sm">{feed._count.articles}</span>
@@ -331,8 +541,14 @@ export default function AdminFeedsPage() {
                         {polling === feed.id ? "Polling..." : "Poll"}
                       </button>
                       <button
-                        onClick={() => handleDelete(feed.id, feed.name)}
+                        onClick={() => startEdit(feed)}
                         className="text-dark-muted hover:text-brand text-xs transition-colors"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => handleDelete(feed.id, feed.name)}
+                        className="text-dark-muted hover:text-red-400 text-xs transition-colors"
                       >
                         Delete
                       </button>
