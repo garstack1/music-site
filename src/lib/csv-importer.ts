@@ -139,6 +139,12 @@ function isNonsense(text: string): boolean {
 
 function validateRow(row: Record<string, string>): string | null {
   const name = row.event_name?.trim();
+  
+  // Skip completely empty rows (don't report as error)
+  if (!name && !row.date?.trim() && !row.venue?.trim()) {
+    return "SKIP_EMPTY";
+  }
+  
   if (!name) return "Missing event_name";
   if (isNonsense(name)) return `Nonsense event name: "${name}"`;
   if (containsProfanity(name)) return `Profanity in event name: "${name}"`;
@@ -245,7 +251,10 @@ export async function importCsvSource(sourceId: string): Promise<CsvImportResult
       try {
         const validationError = validateRow(row);
         if (validationError) {
-          result.rejected.push(validationError);
+          // Silently skip empty rows, but report other errors
+          if (validationError !== "SKIP_EMPTY") {
+            result.rejected.push(validationError);
+          }
           continue;
         }
 
@@ -272,6 +281,12 @@ export async function importCsvSource(sourceId: string): Promise<CsvImportResult
         const artistSpotify = row.artist_spotify?.trim() || null;
         const artistYoutube = row.artist_youtube?.trim() || null;
         const artistTiktok = row.artist_tiktok?.trim() || null;
+        
+        // Parse latitude and longitude
+        const latRaw = row.latitude?.trim();
+        const lngRaw = row.longitude?.trim();
+        const latitude = latRaw ? parseFloat(latRaw) : null;
+        const longitude = lngRaw ? parseFloat(lngRaw) : null;
 
         const dateStr = date.toISOString().split("T")[0];
         const fp = "csv-" + slugify([artist || name, venue, city, dateStr].filter(Boolean).join("-"));
@@ -331,6 +346,8 @@ export async function importCsvSource(sourceId: string): Promise<CsvImportResult
           source: "CSV" as const,
           fingerprint: fp,
           active: true,
+          latitude: latitude && !isNaN(latitude) ? latitude : null,
+          longitude: longitude && !isNaN(longitude) ? longitude : null,
           artistWebsite,
           artistFacebook,
           artistTwitter,

@@ -215,11 +215,13 @@ export async function pollFeed(feedId: string): Promise<PollResult> {
           continue;
         }
 
-        const title = item.title?.trim();
-        if (!title) {
+        // Strip HTML tags and decode entities from title
+        const rawTitle = item.title?.trim();
+        if (!rawTitle) {
           result.skipped++;
           continue;
         }
+        const title = stripHtml(rawTitle);
 
         // Apply keyword filter
         if (filterKeywords.length > 0 && filterMode !== "none") {
