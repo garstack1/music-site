@@ -9,6 +9,9 @@ export async function GET(
     const { slug } = await params;
     const post = await prisma.editorialPost.findUnique({
       where: { slug, status: "PUBLISHED" },
+      include: {
+        galleryImages: { orderBy: { order: "asc" } },
+      },
     });
     if (!post) return NextResponse.json({ error: "Not found" }, { status: 404 });
     return NextResponse.json({ post });

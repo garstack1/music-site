@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import ImageUploader from "@/components/admin/ImageUploader";
+import GalleryUploader, { GalleryImageItem, GalleryDefaults } from "@/components/admin/GalleryUploader";
 
 const RichTextEditor = dynamic(() => import("@/components/admin/RichTextEditor"), {
   ssr: false,
@@ -46,6 +47,14 @@ export default function NewEditorialPostPage() {
     instagramSchedule: "",
     facebookCaption: "",
     facebookSchedule: "",
+  });
+  
+  const [galleryImages, setGalleryImages] = useState<GalleryImageItem[]>([]);
+  const [galleryStyle, setGalleryStyle] = useState("MASONRY");
+  const [galleryDefaults, setGalleryDefaults] = useState<GalleryDefaults>({
+    galleryArtist: "",
+    galleryVenue: "",
+    galleryEvent: "",
   });
 
   function handleChange(field: string, value: string | boolean) {
@@ -100,6 +109,9 @@ export default function NewEditorialPostPage() {
               scheduledAt: form.facebookSchedule || form.publishedAt,
             },
           ].filter(Boolean),
+          galleryImages,
+          galleryStyle,
+          ...galleryDefaults,
         }),
       });
 
@@ -409,6 +421,24 @@ export default function NewEditorialPostPage() {
                 previewHeight="h-24"
               />
             </div>
+          </div>
+
+          {/* Gallery */}
+          <div className="bg-dark-surface border border-dark-border p-6">
+            <h3 className="text-dark-text text-sm font-medium mb-4">
+              Photo Gallery
+              <span className="text-dark-muted text-xs font-normal ml-2">
+                (appears below article)
+              </span>
+            </h3>
+              <GalleryUploader
+                images={galleryImages}
+                onChange={setGalleryImages}
+                galleryStyle={galleryStyle}
+                onStyleChange={setGalleryStyle}
+                defaults={galleryDefaults}
+                onDefaultsChange={setGalleryDefaults}
+              />
           </div>
         </div>
       </div>

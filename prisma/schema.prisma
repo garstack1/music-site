@@ -452,6 +452,11 @@ model EditorialPost {
   showInNews    Boolean           @default(false)
   festivalTag   String?
   socialPosts   SocialPost[]
+  galleryImages GalleryImage[]
+  galleryStyle  GalleryStyle   @default(MASONRY)
+  galleryArtist String?
+  galleryVenue  String?
+  galleryEvent  String?
   createdAt     DateTime          @default(now())
   updatedAt     DateTime          @updatedAt
 
@@ -502,4 +507,32 @@ enum SocialStatus {
   PENDING
   SENT
   FAILED
+}
+
+
+// ============================================
+// IMAGE GALLERY
+// ============================================
+model GalleryImage {
+  id            String        @id @default(cuid())
+  post          EditorialPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  postId        String
+  url           String
+  caption       String?
+  shutterSpeed  String?
+  aperture      String?
+  iso           String?
+  altText       String?
+  tags          String[]
+  order         Int           @default(0)
+  createdAt     DateTime      @default(now())
+
+  @@index([postId])
+  @@index([order])
+}
+
+enum GalleryStyle {
+  MASONRY
+  GRID
+  SLIDESHOW
 }

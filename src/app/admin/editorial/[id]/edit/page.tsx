@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 import dynamic from "next/dynamic";
 import ImageUploader from "@/components/admin/ImageUploader";
+import GalleryUploader, { GalleryImageItem, GalleryDefaults } from "@/components/admin/GalleryUploader";
 
 const RichTextEditor = dynamic(() => import("@/components/admin/RichTextEditor"), {
   ssr: false,
@@ -37,7 +38,15 @@ export default function EditEditorialPostPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [galleryImages, setGalleryImages] = useState<GalleryImageItem[]>([]);
+  const [galleryStyle, setGalleryStyle] = useState("MASONRY");
 
+  const [galleryDefaults, setGalleryDefaults] = useState<GalleryDefaults>({
+    galleryArtist: "",
+    galleryVenue: "",
+    galleryEvent: "",
+  });
+  
   const [form, setForm] = useState({
     title: "",
     slug: "",
@@ -68,8 +77,6 @@ export default function EditEditorialPostPage() {
           return;
         }
         const p = data.post;
-
-        // Extract social posts
         const twitter = p.socialPosts?.find((s: {platform: string}) => s.platform === "TWITTER");
         const instagram = p.socialPosts?.find((s: {platform: string}) => s.platform === "INSTAGRAM");
         const facebook = p.socialPosts?.find((s: {platform: string}) => s.platform === "FACEBOOK");
@@ -93,6 +100,16 @@ export default function EditEditorialPostPage() {
           facebookCaption: facebook?.caption || "",
           facebookSchedule: formatDateTimeLocal(facebook?.scheduledAt),
         });
+
+        // Load gallery
+        setGalleryImages(p.galleryImages || []);
+        setGalleryStyle(p.galleryStyle || "MASONRY");
+        setGalleryDefaults({
+          galleryArtist: p.galleryArtist || "",
+          galleryVenue: p.galleryVenue || "",
+          galleryEvent: p.galleryEvent || "",
+        });
+
       } catch {
         setError("Failed to load post");
       } finally {
@@ -131,6 +148,8 @@ export default function EditEditorialPostPage() {
           publishedAt: form.publishedAt || null,
           showInNews: form.showInNews,
           festivalTag: form.festivalTag,
+          galleryImages,
+          galleryStyle,
           socialPosts: [
             form.twitterCaption && {
               platform: "TWITTER",
@@ -148,6 +167,7 @@ export default function EditEditorialPostPage() {
               scheduledAt: form.facebookSchedule || form.publishedAt || new Date().toISOString(),
             },
           ].filter(Boolean),
+          ...galleryDefaults,
         }),
       });
 
@@ -217,9 +237,7 @@ export default function EditEditorialPostPage() {
         <div className="lg:col-span-2 space-y-6">
 
           <div className="bg-dark-surface border border-dark-border p-6">
-            <label className="block text-dark-muted text-xs font-medium mb-2 uppercase tracking-wider">
-              Title *
-            </label>
+            <label className="block text-dark-muted text-xs font-medium mb-2 uppercase tracking-wider">Title *</label>
             <input
               type="text"
               value={form.title}
@@ -251,9 +269,7 @@ export default function EditEditorialPostPage() {
           </div>
 
           <div className="bg-dark-surface border border-dark-border p-6">
-            <label className="block text-dark-muted text-xs font-medium mb-3 uppercase tracking-wider">
-              Content *
-            </label>
+            <label className="block text-dark-muted text-xs font-medium mb-3 uppercase tracking-wider">Content *</label>
             <RichTextEditor
               value={form.body}
               onChange={(val) => handleChange("body", val)}
@@ -404,6 +420,7 @@ export default function EditEditorialPostPage() {
             />
             <p className="text-dark-muted text-xs mt-2">Groups all content for a festival together</p>
           </div>
+
           <div className="bg-dark-surface border border-dark-border p-6">
             <h3 className="text-dark-text text-sm font-medium mb-4">Images</h3>
             <div className="space-y-6">
@@ -424,6 +441,22 @@ export default function EditEditorialPostPage() {
               />
             </div>
           </div>
+
+          <div className="bg-dark-surface border border-dark-border p-6">
+            <h3 className="text-dark-text text-sm font-medium mb-4">
+              Photo Gallery
+              <span className="text-dark-muted text-xs font-normal ml-2">(appears below article)</span>
+            </h3>
+              <GalleryUploader
+                images={galleryImages}
+                onChange={setGalleryImages}
+                galleryStyle={galleryStyle}
+                onStyleChange={setGalleryStyle}
+                defaults={galleryDefaults}
+                onDefaultsChange={setGalleryDefaults}
+              />
+          </div>
+
         </div>
       </div>
     </div>

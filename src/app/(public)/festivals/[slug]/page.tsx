@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
+import Gallery from "@/components/Gallery";
 
 interface EditorialPost {
   id: string;
@@ -14,6 +15,16 @@ interface EditorialPost {
   coverImage: string | null;
   festivalTag: string | null;
   publishedAt: string | null;
+  galleryImages?: Array<{
+    id: string;
+    url: string;
+    caption?: string;
+    shutterSpeed?: string;
+    aperture?: string;
+    iso?: string;
+    order: number;
+  }>;
+  galleryStyle?: string;
 }
 
 const TYPE_LABELS: Record<string, string> = {
@@ -159,6 +170,15 @@ export default function FestivalPostPage() {
               prose-hr:border-light-border"
             dangerouslySetInnerHTML={{ __html: post.body }}
           />
+
+          {/* Gallery */}
+          {post.galleryImages && post.galleryImages.length > 0 && (
+            <Gallery
+              images={post.galleryImages}
+              style={(post.galleryStyle as "MASONRY" | "GRID" | "SLIDESHOW") || "MASONRY"}
+              siteName="MUSICSITE"
+            />
+          )}
 
           {/* Back link */}
           <div className="mt-12 pt-6 border-t border-light-border">
