@@ -13,36 +13,27 @@ export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
     const files = formData.getAll("photos") as File[];
+    const folder = (formData.get("folder") as string) || "reviews";
 
     if (!files || files.length === 0) {
-      return NextResponse.json(
-        { error: "No files provided" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "No files provided" }, { status: 400 });
     }
 
-    const uploadDir = path.join(process.cwd(), "public", "uploads", "reviews");
+    const uploadDir = path.join(process.cwd(), "public", "uploads", folder);
     await mkdir(uploadDir, { recursive: true });
 
     const uploaded: string[] = [];
 
     for (const file of files) {
-      if (!file.type.startsWith("image/")) {
-        continue;
-      }
-
-      if (file.size > 10 * 1024 * 1024) {
-        continue;
-      }
+      if (!file.type.startsWith("image/")) continue;
+      if (file.size > 10 * 1024 * 1024) continue;
 
       const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
       const hash = crypto.randomBytes(8).toString("hex");
       const filename = `${Date.now()}-${hash}.${ext}`;
-
       const buffer = Buffer.from(await file.arrayBuffer());
       await writeFile(path.join(uploadDir, filename), buffer);
-
-      uploaded.push(`/uploads/reviews/${filename}`);
+      uploaded.push(`/uploads/${folder}/${filename}`);
     }
 
     if (uploaded.length === 0) {
@@ -55,9 +46,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ urls: uploaded });
   } catch (error) {
     console.error("Upload error:", error);
-    return NextResponse.json(
-      { error: "Failed to upload files" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to upload files" }, { status: 500 });
   }
 }

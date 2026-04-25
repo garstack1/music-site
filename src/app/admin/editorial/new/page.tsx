@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
+import ImageUploader from "@/components/admin/ImageUploader";
 
 const RichTextEditor = dynamic(() => import("@/components/admin/RichTextEditor"), {
   ssr: false,
@@ -391,43 +392,24 @@ export default function NewEditorialPostPage() {
           {/* Images */}
           <div className="bg-dark-surface border border-dark-border p-6">
             <h3 className="text-dark-text text-sm font-medium mb-4">Images</h3>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-dark-muted text-xs font-medium mb-2 uppercase tracking-wider">
-                  Cover Image URL
-                </label>
-                <input
-                  type="text"
-                  value={form.coverImage}
-                  onChange={(e) => handleChange("coverImage", e.target.value)}
-                  placeholder="https://..."
-                  className="w-full bg-dark-bg border border-dark-border text-dark-text text-sm px-3 py-2 focus:outline-none focus:border-brand placeholder-dark-muted"
-                />
-                {form.coverImage && (
-                  <img
-                    src={form.coverImage}
-                    alt="Cover preview"
-                    className="mt-2 w-full h-32 object-cover border border-dark-border"
-                    onError={(e) => (e.currentTarget.style.display = "none")}
-                  />
-                )}
-              </div>
-              <div>
-                <label className="block text-dark-muted text-xs font-medium mb-2 uppercase tracking-wider">
-                  Social Share Image URL
-                  <span className="ml-1 font-normal normal-case text-dark-muted">(1200×630)</span>
-                </label>
-                <input
-                  type="text"
-                  value={form.socialImage}
-                  onChange={(e) => handleChange("socialImage", e.target.value)}
-                  placeholder="https://..."
-                  className="w-full bg-dark-bg border border-dark-border text-dark-text text-sm px-3 py-2 focus:outline-none focus:border-brand placeholder-dark-muted"
-                />
-              </div>
+            <div className="space-y-6">
+              <ImageUploader
+                label="Cover Image"
+                value={form.coverImage}
+                onChange={(url) => handleChange("coverImage", url)}
+                folder="editorial"
+                previewHeight="h-32"
+              />
+              <ImageUploader
+                label="Social Share Image"
+                hint="(1200×630)"
+                value={form.socialImage}
+                onChange={(url) => handleChange("socialImage", url)}
+                folder="editorial"
+                previewHeight="h-24"
+              />
             </div>
           </div>
-
         </div>
       </div>
     </div>
