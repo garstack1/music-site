@@ -1,45 +1,49 @@
-"use client";
-
-import { useState, useEffect } from "react";
-import { useParams } from "next/navigation";
+import { prisma } from "@/lib/db";
 import Link from "next/link";
-import Gallery from "@/components/Gallery";
+import { notFound } from "next/navigation";
+import { Metadata } from "next";
+import GallerySection from "@/components/GallerySection";
 
-
-function useSiteName() {
-  const [siteName, setSiteName] = useState("MUSICSITE");
-  useEffect(() => {
-    fetch("/api/settings")
-      .then((r) => r.json())
-      .then((d) => {
-        if (d.settings?.site_name) setSiteName(d.settings.site_name);
-      })
-      .catch(() => {});
-  }, []);
-  return siteName;
+interface PageProps {
+  params: Promise<{ slug: string }>;
 }
 
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { slug } = await params;
+  const post = await prisma.editorialPost.findUnique({
+    where: { slug, status: "PUBLISHED" },
+    select: {
+      title: true,
+      excerpt: true,
+      coverImage: true,
+      festivalTag: true,
+      type: true,
+    },
+  });
 
-interface EditorialPost {
-  id: string;
-  title: string;
-  slug: string;
-  type: string;
-  excerpt: string | null;
-  body: string;
-  coverImage: string | null;
-  festivalTag: string | null;
-  publishedAt: string | null;
-  galleryImages?: Array<{
-    id: string;
-    url: string;
-    caption?: string;
-    shutterSpeed?: string;
-    aperture?: string;
-    iso?: string;
-    order: number;
-  }>;
-  galleryStyle?: string;
+  if (!post) return { title: "Not Found" };
+
+  const siteUrl = process.env.NEXTAUTH_URL || "https://music-site-sigma.vercel.app";
+
+  return {
+    title: post.title,
+    description: post.excerpt || undefined,
+    openGraph: {
+      title: post.title,
+      description: post.excerpt || undefined,
+      url: `${siteUrl}/festivals/${slug}`,
+      type: "article",
+      images: post.coverImage
+        ? [{ url: post.coverImage, width: 1200, height: 630, alt: post.title }]
+        : undefined,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: post.title,
+      description: post.excerpt || undefined,
+      images: post.coverImage ? [post.coverImage] : undefined,
+    },
+  };
 }
 
 const TYPE_LABELS: Record<string, string> = {
@@ -54,59 +58,37 @@ const TYPE_COLOURS: Record<string, string> = {
   FESTIVAL_RECAP: "bg-teal-600",
 };
 
-export default function FestivalPostPage() {
-  const siteName = useSiteName();
-  const params = useParams();
-  const slug = params.slug as string;
-  const [post, setPost] = useState<EditorialPost | null>(null);
-  const [related, setRelated] = useState<EditorialPost[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [notFound, setNotFound] = useState(false);
+export default async function FestivalPostPage({ params }: PageProps) {
+  const { slug } = await params;
 
-  useEffect(() => {
-    fetch(`/api/editorial/${slug}`)
-      .then((r) => {
-        if (r.status === 404) { setNotFound(true); return null; }
-        return r.json();
+  const post = await prisma.editorialPost.findUnique({
+    where: { slug, status: "PUBLISHED" },
+    include: {
+      galleryImages: { orderBy: { order: "asc" } },
+    },
+  });
+
+  if (!post) notFound();
+
+  // Fetch related posts
+  const related = post.festivalTag
+    ? await prisma.editorialPost.findMany({
+        where: {
+          festivalTag: post.festivalTag,
+          status: "PUBLISHED",
+          NOT: { slug },
+        },
+        select: {
+          id: true,
+          title: true,
+          slug: true,
+          type: true,
+          coverImage: true,
+          publishedAt: true,
+        },
+        take: 5,
       })
-      .then((data) => {
-        if (!data) return;
-        setPost(data.post);
-        // Fetch related posts by festival tag
-        if (data.post?.festivalTag) {
-          fetch(`/api/editorial?festivalTag=${data.post.festivalTag}&limit=10`)
-            .then((r) => r.json())
-            .then((d) => setRelated((d.posts || []).filter((p: EditorialPost) => p.slug !== slug)));
-        }
-      })
-      .catch(() => setNotFound(true))
-      .finally(() => setLoading(false));
-  }, [slug]);
-
-  if (loading) {
-    return (
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-pulse">
-        <div className="h-8 bg-light-surface rounded w-3/4 mb-4" />
-        <div className="aspect-video bg-light-surface rounded mb-8" />
-        <div className="space-y-3">
-          {[...Array(8)].map((_, i) => (
-            <div key={i} className="h-4 bg-light-surface rounded" />
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  if (notFound || !post) {
-    return (
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center">
-        <p className="text-light-muted text-lg mb-4">Post not found.</p>
-        <Link href="/festivals" className="text-brand hover:text-brand-hover text-sm">
-          ← Back to Festivals
-        </Link>
-      </div>
-    );
-  }
+    : [];
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -115,11 +97,16 @@ export default function FestivalPostPage() {
         <article className="lg:col-span-3">
           {/* Breadcrumb */}
           <div className="flex items-center gap-2 text-sm text-light-muted mb-6">
-            <Link href="/festivals" className="hover:text-brand transition-colors">Festivals</Link>
+            <Link href="/festivals" className="hover:text-brand transition-colors">
+              Festivals
+            </Link>
             <span>→</span>
             {post.festivalTag && (
               <>
-                <Link href={`/festivals?tag=${post.festivalTag}`} className="hover:text-brand transition-colors capitalize">
+                <Link
+                  href={`/festivals?tag=${post.festivalTag}`}
+                  className="hover:text-brand transition-colors capitalize"
+                >
                   {post.festivalTag.replace(/-/g, " ")}
                 </Link>
                 <span>→</span>
@@ -189,15 +176,12 @@ export default function FestivalPostPage() {
 
           {/* Gallery */}
           {post.galleryImages && post.galleryImages.length > 0 && (
-            <Gallery
+            <GallerySection
               images={post.galleryImages}
               style={(post.galleryStyle as "MASONRY" | "GRID" | "SLIDESHOW") || "MASONRY"}
-              siteName={siteName}
-              meta={{
-                artist: post.galleryArtist,
-                venue: post.galleryVenue,
-                event: post.galleryEvent,
-              }}
+              galleryArtist={post.galleryArtist || undefined}
+              galleryVenue={post.galleryVenue || undefined}
+              galleryEvent={post.galleryEvent || undefined}
             />
           )}
 
@@ -218,11 +202,7 @@ export default function FestivalPostPage() {
               </h3>
               <div className="space-y-4">
                 {related.map((p) => (
-                  <Link
-                    key={p.id}
-                    href={`/festivals/${p.slug}`}
-                    className="group block"
-                  >
+                  <Link key={p.id} href={`/festivals/${p.slug}`} className="group block">
                     {p.coverImage && (
                       <div className="aspect-video overflow-hidden mb-2">
                         <img
