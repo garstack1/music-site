@@ -416,6 +416,7 @@ export default function NewEditorialPostPage() {
                 value={form.coverImage}
                 onChange={(url) => handleChange("coverImage", url)}
                 folder="editorial"
+                subfolder={form.slug || undefined}
                 previewHeight="h-32"
               />
               <ImageUploader
@@ -424,6 +425,7 @@ export default function NewEditorialPostPage() {
                 value={form.socialImage}
                 onChange={(url) => handleChange("socialImage", url)}
                 folder="editorial"
+                subfolder={form.slug || undefined}
                 previewHeight="h-24"
               />
             </div>
@@ -444,6 +446,7 @@ export default function NewEditorialPostPage() {
                 onStyleChange={setGalleryStyle}
                 defaults={galleryDefaults}
                 onDefaultsChange={setGalleryDefaults}
+                subfolder={form.slug || undefined}
               />
           </div>
         </div>

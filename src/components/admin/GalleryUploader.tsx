@@ -28,6 +28,7 @@ interface GalleryUploaderProps {
   onStyleChange: (style: string) => void;
   defaults: GalleryDefaults;
   onDefaultsChange: (defaults: GalleryDefaults) => void;
+  subfolder?: string;
 }
 
 const GALLERY_STYLES = [
@@ -75,6 +76,7 @@ export default function GalleryUploader({
   onStyleChange,
   defaults,
   onDefaultsChange,
+  subfolder,
 }: GalleryUploaderProps) {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState(false);
@@ -95,6 +97,7 @@ export default function GalleryUploader({
       const formData = new FormData();
       Array.from(files).forEach((f) => formData.append("photos", f));
       formData.append("folder", "editorial");
+      formData.append("subfolder", subfolder ? `${subfolder}/gallery` : `gallery-${Date.now()}`);
 
       const res = await fetch("/api/admin/upload", {
         method: "POST",

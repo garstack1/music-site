@@ -8,6 +8,7 @@ interface ImageUploaderProps {
   label: string;
   hint?: string;
   folder?: string;
+  subfolder?: string;
   previewHeight?: string;
 }
 
@@ -17,6 +18,7 @@ export default function ImageUploader({
   label,
   hint,
   folder = "editorial",
+  subfolder,
   previewHeight = "h-32",
 }: ImageUploaderProps) {
   const [uploading, setUploading] = useState(false);
@@ -32,6 +34,7 @@ export default function ImageUploader({
     const formData = new FormData();
     formData.append("photos", files[0]);
     formData.append("folder", folder);
+    formData.append("subfolder", subfolder || `upload-${Date.now()}`);
 
     try {
       const res = await fetch("/api/admin/upload", {
@@ -57,20 +60,15 @@ export default function ImageUploader({
         <label className="block text-dark-muted text-xs font-medium uppercase tracking-wider">
           {label}
           {hint && (
-            <span className="ml-1 font-normal normal-case text-dark-muted">
-              {hint}
-            </span>
+            <span className="ml-1 font-normal normal-case text-dark-muted">{hint}</span>
           )}
         </label>
-        {/* Toggle between URL and upload */}
         <div className="flex gap-1">
           <button
             type="button"
             onClick={() => setMode("url")}
             className={`text-xs px-2 py-0.5 transition-colors ${
-              mode === "url"
-                ? "bg-brand text-white"
-                : "text-dark-muted hover:text-dark-text"
+              mode === "url" ? "bg-brand text-white" : "text-dark-muted hover:text-dark-text"
             }`}
           >
             URL
@@ -79,9 +77,7 @@ export default function ImageUploader({
             type="button"
             onClick={() => setMode("upload")}
             className={`text-xs px-2 py-0.5 transition-colors ${
-              mode === "upload"
-                ? "bg-brand text-white"
-                : "text-dark-muted hover:text-dark-text"
+              mode === "upload" ? "bg-brand text-white" : "text-dark-muted hover:text-dark-text"
             }`}
           >
             Upload
@@ -113,22 +109,15 @@ export default function ImageUploader({
             <p className="text-dark-muted text-sm">Uploading...</p>
           ) : (
             <>
-              <p className="text-dark-muted text-sm">
-                Click to browse or drag an image here
-              </p>
-              <p className="text-dark-muted text-xs mt-1">
-                Max 10MB — JPG, PNG, WebP
-              </p>
+              <p className="text-dark-muted text-sm">Click to browse or drag an image here</p>
+              <p className="text-dark-muted text-xs mt-1">Max 10MB — JPG, PNG, WebP</p>
             </>
           )}
         </div>
       )}
 
-      {error && (
-        <p className="text-red-400 text-xs mt-1">{error}</p>
-      )}
+      {error && <p className="text-red-400 text-xs mt-1">{error}</p>}
 
-      {/* Preview */}
       {value && (
         <div className={`mt-2 relative ${previewHeight} overflow-hidden border border-dark-border`}>
           <img
