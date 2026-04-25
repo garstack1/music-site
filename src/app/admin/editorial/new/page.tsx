@@ -57,15 +57,21 @@ export default function NewEditorialPostPage() {
     galleryEvent: "",
   });
 
+  const [slugManuallyEdited, setSlugManuallyEdited] = useState(false);
+
   function handleChange(field: string, value: string | boolean) {
     setForm((prev) => {
       const updated = { ...prev, [field]: value };
-      // Auto-generate slug from title
-      if (field === "title" && !prev.slug) {
+      // Auto-generate slug from title unless user has manually edited it
+      if (field === "title" && !slugManuallyEdited) {
         updated.slug = (value as string)
           .toLowerCase()
           .replace(/[^a-z0-9]+/g, "-")
           .replace(/(^-|-$)/g, "");
+      }
+      // If user edits slug directly, stop auto-generating
+      if (field === "slug") {
+        setSlugManuallyEdited(true);
       }
       return updated;
     });
