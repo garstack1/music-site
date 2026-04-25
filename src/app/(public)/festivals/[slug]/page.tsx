@@ -5,6 +5,21 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import Gallery from "@/components/Gallery";
 
+
+function useSiteName() {
+  const [siteName, setSiteName] = useState("MUSICSITE");
+  useEffect(() => {
+    fetch("/api/settings")
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.settings?.site_name) setSiteName(d.settings.site_name);
+      })
+      .catch(() => {});
+  }, []);
+  return siteName;
+}
+
+
 interface EditorialPost {
   id: string;
   title: string;
@@ -40,6 +55,7 @@ const TYPE_COLOURS: Record<string, string> = {
 };
 
 export default function FestivalPostPage() {
+  const siteName = useSiteName();
   const params = useParams();
   const slug = params.slug as string;
   const [post, setPost] = useState<EditorialPost | null>(null);
@@ -176,7 +192,12 @@ export default function FestivalPostPage() {
             <Gallery
               images={post.galleryImages}
               style={(post.galleryStyle as "MASONRY" | "GRID" | "SLIDESHOW") || "MASONRY"}
-              siteName="MUSICSITE"
+              siteName={siteName}
+              meta={{
+                artist: post.galleryArtist,
+                venue: post.galleryVenue,
+                event: post.galleryEvent,
+              }}
             />
           )}
 
