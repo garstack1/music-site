@@ -5,185 +5,318 @@ function slugify(text: string): string {
   return text.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 100);
 }
 
-function extractContent(text: string, startMarker: string, endMarker: string): string {
-  let content = text;
-  if (startMarker && startMarker.trim()) {
-    const startIdx = content.indexOf(startMarker);
-    if (startIdx !== -1) {
-      content = content.substring(startIdx + startMarker.length);
-    }
-  }
-  if (endMarker && endMarker.trim()) {
-    const endIdx = content.indexOf(endMarker);
-    if (endIdx !== -1) {
-      content = content.substring(0, endIdx);
-    }
-  }
-  return content.trim();
-}
-
-function extractTitle(content: string): string {
-  const lines = content.split("\n").map((l) => l.trim()).filter(Boolean);
-  for (const line of lines.slice(0, 10)) {
-    const cleaned = line.replace(/[^a-zA-Z\s']/g, "").trim();
-    if (cleaned.length > 5 && cleaned.length < 100 && cleaned === cleaned.toUpperCase()) {
-      return line.replace(/\*+/g, "").trim();
-    }
-  }
-  for (const line of lines) {
-    if (line.length > 10 && !line.startsWith("Photo") && !line.startsWith("http")) {
-      return line.slice(0, 150);
-    }
-  }
-  return "Untitled Press Release";
-}
-
-function extractSummary(content: string): string {
-  const lines = content.split("\n").map((l) => l.trim()).filter(Boolean);
-  for (const line of lines) {
-    if (line.length > 80 && line !== line.toUpperCase() && !line.startsWith("http") && !line.startsWith("Watch") && !line.startsWith("Photo")) {
-      const sentences = line.match(/[^.!?]+[.!?]+/g);
-      if (sentences && sentences.length >= 2) {
-        return sentences.slice(0, 2).join("").trim();
-      }
-      return line.slice(0, 300);
-    }
-  }
-  return content.slice(0, 300);
-}
-
-function extractImages(text: string): string[] {
-  const images: string[] = [];
+function decodeQuotedPrintable(str: string, charset = "UTF-8"): string {
+  // Remove soft line breaks
+  let decoded = str.replace(/=\r\n/g, "").replace(/=\n/g, "");
   
-  // Match image URLs with common extensions and formats
-  const imgRegex = /https?:\/\/[^\s<>"]+\.(jpg|jpeg|png|gif|webp|svg)(\?[^\s<>"]*)?/gi;
-  let match;
-  while ((match = imgRegex.exec(text)) !== null) {
-    if (!images.includes(match[0])) images.push(match[0]);
-  }
-  
-  // Also extract URLs in angle brackets like <https://example.com/image.jpg>
-  const angleBracketRegex = /<(https?:\/\/[^\s<>"]+\.(jpg|jpeg|png|gif|webp|svg))>/gi;
-  while ((match = angleBracketRegex.exec(text)) !== null) {
-    if (!images.includes(match[1])) images.push(match[1]);
-  }
-  
-  return images;
-}
-
-function extractEmbeddedImages(source: string): string[] {
-  const images: string[] = [];
-  
-  // Find all MIME parts with Content-ID (inline images)
-  const mimePartRegex = /--[^\r\n]+\r\nContent-Type: image\/([^\s;]+)[\s\S]*?Content-Transfer-Encoding: base64\r\n(?:Content-ID: <([^>]+)>)?\r\n\r\n([\s\S]*?)\r\n(?=--[^\r\n]+(?:\r\n|--|$))/gi;
-  
-  let match;
-  while ((match = mimePartRegex.exec(source)) !== null) {
-    const imageType = match[1];
-    const contentId = match[2];
-    const base64Data = match[3].replace(/\r\n/g, "").trim();
-    
-    if (base64Data && base64Data.length > 0) {
-      // Create data URL
-      const mimeType = `image/${imageType}`;
-      const dataUrl = `data:${mimeType};base64,${base64Data}`;
-      images.push(dataUrl);
+  // Collect all QP-encoded bytes and decode as proper UTF-8
+  decoded = decoded.replace(/(=[0-9A-F]{2})+/gi, (match) => {
+    const bytes = match.split("=").filter(Boolean).map(h => parseInt(h, 16));
+    try {
+      return Buffer.from(bytes).toString("utf8");
+    } catch {
+      return match;
     }
-  }
+  });
   
-  return images;
-}
-
-function extractVideos(text: string): string[] {
-  const videos: string[] = [];
-  const ytRegex = /https?:\/\/(www\.)?(youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)[^\s<>"]+/gi;
-  let match;
-  while ((match = ytRegex.exec(text)) !== null) {
-    if (!videos.includes(match[0])) videos.push(match[0]);
-  }
-  const vimeoRegex = /https?:\/\/(www\.)?vimeo\.com\/[^\s<>"]+/gi;
-  while ((match = vimeoRegex.exec(text)) !== null) {
-    if (!videos.includes(match[0])) videos.push(match[0]);
-  }
-  return videos;
-}
-
-function decodeHtmlEntities(str: string): string {
-  // HTML entity map for common special characters
-  const entities: Record<string, string> = {
-    "&nbsp;": " ",
-    "&amp;": "&",
-    "&lt;": "<",
-    "&gt;": ">",
-    "&quot;": '"',
-    "&apos;": "'",
-    "&rsquo;": "'",
-    "&lsquo;": "'",
-    "&rdquo;": '"',
-    "&ldquo;": '"',
-    "&mdash;": "—",
-    "&ndash;": "–",
-    "&hellip;": "...",
-    "&bull;": "•",
-    "&copy;": "©",
-    "&reg;": "®",
-    "&trade;": "™",
-  };
-
-  let decoded = str;
-  for (const [entity, char] of Object.entries(entities)) {
-    decoded = decoded.replace(new RegExp(entity, "g"), char);
-  }
-
-  // Handle numeric entities
-  decoded = decoded.replace(/&#x([0-9a-fA-F]+);/g, (_, hex) => String.fromCharCode(parseInt(hex, 16)));
-  decoded = decoded.replace(/&#([0-9]+);/g, (_, dec) => String.fromCharCode(parseInt(dec, 10)));
-
-  // Clean up common Unicode characters that come from bad encoding
-  // Replace smart quotes and dashes with standard ASCII equivalents
-  decoded = decoded
-    .replace(/[""]/g, '"')      // Smart quotes → straight quote
-    .replace(/['']/g, "'")      // Smart apostrophes → straight apostrophe
-    .replace(/–/g, "-")         // En dash → hyphen
-    .replace(/—/g, "-")         // Em dash → hyphen
-    .replace(/…/g, "...")       // Ellipsis → three dots
-
   return decoded;
 }
 
-function stripHtml(html: string): string {
-  let text = html
-    .replace(/<br\s*\/?>/gi, "\n")
-    .replace(/<\/p>/gi, "\n\n")
-    .replace(/<\/div>/gi, "\n")
-    .replace(/<[^>]*>/g, "");
-  
-  // Decode entities
-  text = text
-    .replace(/&#x([0-9a-fA-F]+);/g, (_, hex) => String.fromCharCode(parseInt(hex, 16)))
-    .replace(/&#([0-9]+);/g, (_, dec) => String.fromCharCode(parseInt(dec, 10)))
-    .replace(/&nbsp;/g, " ")
-    .replace(/&amp;/g, "&")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/&quot;/g, '"')
-    .replace(/&rsquo;/g, "'")
-    .replace(/&lsquo;/g, "'")
-    .replace(/&rdquo;/g, '"')
-    .replace(/&ldquo;/g, '"')
-    .replace(/&mdash;/g, "-")
-    .replace(/&ndash;/g, "-")
-    .replace(/&hellip;/g, "...")
-    // Clean up smart quotes/dashes that might come through
-    .replace(/[""]/g, '"')
-    .replace(/['']/g, "'")
-    .replace(/–/g, "-")
-    .replace(/—/g, "-")
-    .replace(/…/g, "...")
-    .replace(/\n{3,}/g, "\n\n")
+function decodeHtmlEntities(str: string): string {
+  const entities: Record<string, string> = {
+    "&nbsp;": " ", "&amp;": "&", "&lt;": "<", "&gt;": ">",
+    "&quot;": '"', "&apos;": "'", "&rsquo;": "'", "&lsquo;": "'",
+    "&rdquo;": '"', "&ldquo;": '"', "&mdash;": "—", "&ndash;": "–",
+    "&hellip;": "...", "&bull;": "•", "&copy;": "©", "&reg;": "®", "&trade;": "™",
+  };
+  let decoded = str;
+  for (const [entity, char] of Object.entries(entities)) {
+    decoded = decoded.replace(new RegExp(entity, "gi"), char);
+  }
+  decoded = decoded.replace(/&#x([0-9a-fA-F]+);/g, (_, hex) => String.fromCharCode(parseInt(hex, 16)));
+  decoded = decoded.replace(/&#([0-9]+);/g, (_, dec) => String.fromCharCode(parseInt(dec, 10)));
+  return decoded;
+}
+
+function isTrackingPixel(src: string, width?: string, height?: string): boolean {
+  if (src.startsWith("data:")) return true;
+  if ((width === "1" || width === "0") && (height === "1" || height === "0")) return true;
+  const trackingDomains = ["track.", "pixel.", "open.", "click.", "analytics.", "beacon."];
+  try {
+    const url = new URL(src);
+    if (trackingDomains.some((d) => url.hostname.startsWith(d))) return true;
+  } catch { return false; }
+  return false;
+}
+
+function youtubeIdFromUrl(url: string): string | null {
+  const patterns = [
+    /youtube\.com\/watch\?v=([^&\s]+)/,
+    /youtu\.be\/([^?\s]+)/,
+    /youtube\.com\/embed\/([^?\s]+)/,
+  ];
+  for (const pattern of patterns) {
+    const match = url.match(pattern);
+    if (match) return match[1];
+  }
+  return null;
+}
+
+function vimeoIdFromUrl(url: string): string | null {
+  const match = url.match(/vimeo\.com\/(\d+)/);
+  return match ? match[1] : null;
+}
+
+function cleanHtmlEmail(html: string): { body: string; featuredImage: string | null } {
+  let content = html;
+
+  content = decodeQuotedPrintable(content);
+  content = decodeHtmlEntities(content);
+
+  const bodyMatch = content.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
+  if (bodyMatch) content = bodyMatch[1];
+
+  content = content.replace(/<script[\s\S]*?<\/script>/gi, "");
+  content = content.replace(/<style[\s\S]*?<\/style>/gi, "");
+  content = content.replace(/<!--[\s\S]*?-->/g, "");
+
+  const footerPatterns = [
+    /unsubscribe[\s\S]{0,500}$/i,
+    /to stop receiving[\s\S]{0,500}$/i,
+    /you are receiving this[\s\S]{0,500}$/i,
+    /this email was sent[\s\S]{0,500}$/i,
+    /manage your preferences[\s\S]{0,500}$/i,
+    /view this email in your browser[\s\S]{0,200}/i,
+    /view in browser[\s\S]{0,200}/i,
+    /click here to unsubscribe[\s\S]{0,300}/i,
+  ];
+  for (const pattern of footerPatterns) {
+    content = content.replace(pattern, "");
+  }
+  // Collapse deeply nested empty divs (common in Apple Mail HTML)
+  for (let i = 0; i < 10; i++) {
+    content = content.replace(/<div>(\s*<div>\s*<\/div>\s*)*<\/div>/gi, "");
+  }
+
+
+  // Collapse deeply nested divs
+  let prev = "";
+  while (prev !== content) {
+    prev = content;
+    content = content.replace(/<div>\s*(<div>[\s\S]*?<\/div>)\s*<\/div>/gi, "$1");
+    content = content.replace(/<div>\s*<br>\s*<\/div>/gi, "<br>");
+    content = content.replace(/<div>\s*<\/div>/gi, "");
+  }
+
+  // Remove repeated br tags
+  content = content.replace(/(<br\s*\/?>\s*){3,}/gi, "<br><br>");
+
+  let featuredImage: string | null = null;
+  const imgRegex = /<img[^>]+src=["']([^"']+)["'][^>]*>/gi;
+  let imgMatch;
+  while ((imgMatch = imgRegex.exec(content)) !== null) {
+    const src = imgMatch[1];
+    const widthMatch = imgMatch[0].match(/width=["']?(\d+)["']?/i);
+    const heightMatch = imgMatch[0].match(/height=["']?(\d+)["']?/i);
+    if (!isTrackingPixel(src, widthMatch?.[1], heightMatch?.[1]) && src.startsWith("http")) {
+      featuredImage = src;
+      break;
+    }
+  }
+
+// Remove cid: images (embedded MIME attachments - can't display in browser)
+  content = content.replace(/<img[^>]+src=["']cid:[^"']+["'][^>]*>/gi, "");
+
+  // Clean remaining images
+  content = content.replace(/<img[^>]+>/gi, (match) => {
+    const srcMatch = match.match(/src=["']([^"']+)["']/i);
+    if (!srcMatch) return "";
+    const src = srcMatch[1];
+    if (src.startsWith("cid:")) return "";
+    if (src.startsWith("data:")) return "";
+    const widthMatch = match.match(/width=["']?(\d+)["']?/i);
+    const heightMatch = match.match(/height=["']?(\d+)["']?/i);
+    if (isTrackingPixel(src, widthMatch?.[1], heightMatch?.[1])) return "";
+    return `<img src="${src}" alt="" style="max-width:100%;height:auto;" />`;
+  });
+
+  // Strip all inline styles (keep tags, remove style attributes)
+  content = content.replace(/\s+style=["'][^"']*["']/gi, "");
+
+  // Strip font tags
+  content = content.replace(/<font[^>]*>/gi, "").replace(/<\/font>/gi, "");
+
+  // Strip class and id attributes
+  content = content.replace(/\s+class=["'][^"']*["']/gi, "");
+  content = content.replace(/\s+id=["'][^"']*["']/gi, "");
+  content = content.replace(/\s+dir=["'][^"']*["']/gi, "");
+
+// Fix mangled UTF-8 smart quotes and special characters
+  content = content
+    .replace(/\u00e2\u0080\u0099/g, "'")   // '
+    .replace(/\u00e2\u0080\u009c/g, '"')   // "
+    .replace(/\u00e2\u0080\u009d/g, '"')   // "
+    .replace(/\u00e2\u0080\u0093/g, "–")   // –
+    .replace(/\u00e2\u0080\u0094/g, "—")   // —
+    .replace(/\u00e2\u0080\u00a6/g, "...")  // …
+    .replace(/â\u0080\u0099/g, "'")
+    .replace(/â\u0080\u009c/g, '"')
+    .replace(/â\u0080\u009d/g, '"')
+    .replace(/â€™/g, "'")
+    .replace(/â€œ/g, '"')
+    .replace(/â€\u009d/g, '"')
+    .replace(/â€"/g, "—")
+    .replace(/â€"/g, "–")
+    .replace(/â€¦/g, "...")
+    .replace(/â/g, "'");  // catch remaining â characters
+
+  // Remove excessive empty divs and br chains
+  content = content
+    .replace(/(<div>\s*<br>\s*<\/div>){2,}/gi, "<br>")
+    .replace(/(<br>\s*){3,}/gi, "<br><br>")
+    .replace(/(<div>\s*<\/div>){2,}/gi, "")
+    .replace(/<div>\s*<br>\s*<\/div>/gi, "<br>")
     .trim();
-  
-  return text;
+
+// Convert YouTube links — handle both plain URLs and <a href="..."> links
+  // First handle <a href="youtube-url">text</a> — replace entire anchor with iframe
+  content = content.replace(
+    /<a[^>]+href=["'](https?:\/\/(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/)[^"']+)["'][^>]*>[\s\S]*?<\/a>/gi,
+    (match, url) => {
+      const id = youtubeIdFromUrl(url);
+      if (!id) return match;
+      return `<div style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;margin:1em 0;">
+        <iframe src="https://www.youtube.com/embed/${id}"
+          style="position:absolute;top:0;left:0;width:100%;height:100%;border:0;"
+          allowfullscreen loading="lazy"></iframe>
+      </div>`;
+    }
+  );
+
+  // Then handle plain YouTube URLs in text
+  content = content.replace(
+    /(?<!href=["'])https?:\/\/(www\.)?(youtube\.com\/watch\?v=|youtu\.be\/)[^\s<>"&]+/gi,
+    (url) => {
+      const id = youtubeIdFromUrl(url);
+      if (!id) return url;
+      return `<div style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;margin:1em 0;">
+        <iframe src="https://www.youtube.com/embed/${id}"
+          style="position:absolute;top:0;left:0;width:100%;height:100%;border:0;"
+          allowfullscreen loading="lazy"></iframe>
+      </div>`;
+    }
+  );
+
+  // Convert Vimeo links
+  content = content.replace(
+    /<a[^>]+href=["'](https?:\/\/(?:www\.)?vimeo\.com\/\d+[^"']*)["'][^>]*>[\s\S]*?<\/a>/gi,
+    (match, url) => {
+      const id = vimeoIdFromUrl(url);
+      if (!id) return match;
+      return `<div style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;margin:1em 0;">
+        <iframe src="https://player.vimeo.com/video/${id}"
+          style="position:absolute;top:0;left:0;width:100%;height:100%;border:0;"
+          allowfullscreen loading="lazy"></iframe>
+      </div>`;
+    }
+  );
+
+  content = content.replace(
+    /(?<!href=["'])https?:\/\/(www\.)?vimeo\.com\/\d+[^\s<>"&]*/gi,
+    (url) => {
+      const id = vimeoIdFromUrl(url);
+      if (!id) return url;
+      return `<div style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;margin:1em 0;">
+        <iframe src="https://player.vimeo.com/video/${id}"
+          style="position:absolute;top:0;left:0;width:100%;height:100%;border:0;"
+          allowfullscreen loading="lazy"></iframe>
+      </div>`;
+    }
+  );
+
+  content = content.replace(
+    /https?:\/\/(www\.)?vimeo\.com\/\d+[^\s<>"&]*/gi,
+    (url) => {
+      const id = vimeoIdFromUrl(url);
+      if (!id) return url;
+      return `<div style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;margin:1em 0;">
+        <iframe src="https://player.vimeo.com/video/${id}"
+          style="position:absolute;top:0;left:0;width:100%;height:100%;border:0;"
+          allowfullscreen loading="lazy"></iframe>
+      </div>`;
+    }
+  );
+
+  content = content.replace(/<a([^>]*)href=["']([^"']+)["']([^>]*)>/gi, (_, _before, href) => {
+    if (/unsubscribe|optout|opt-out|track\./i.test(href)) return "";
+    return `<a href="${href}" target="_blank" rel="noopener noreferrer">`;
+  });
+
+  content = content
+    .replace(/\n{3,}/g, "\n\n")
+    .replace(/(<br\s*\/?>\s*){3,}/gi, "<br><br>")
+    .replace(/(<p>\s*<\/p>)/gi, "")
+    .trim();
+
+    // Final smart quote cleanup — catch any remaining encoding artifacts
+  content = content
+    .replace(/â€™/g, "'")
+    .replace(/â€˜/g, "'")
+    .replace(/â€œ/g, '"')
+    .replace(/â€/g, '"')
+    .replace(/â€"/g, "—")
+    .replace(/â€"/g, "–")
+    .replace(/â€¦/g, "…")
+    .replace(/Â·/g, "·")
+    .replace(/Â/g, "")
+    // Catch the specific pattern: â followed by a control char followed by a char
+    .replace(/â[\u0080-\u00ff][\u0080-\u00ff]/g, (match) => {
+      const bytes = [match.charCodeAt(0), match.charCodeAt(1), match.charCodeAt(2)];
+      try {
+        return Buffer.from(bytes).toString("utf8");
+      } catch {
+        return "'";
+      }
+    });
+    
+  return { body: content, featuredImage };
+}
+
+function extractSummaryFromHtml(html: string): string {
+  const text = html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+  const sentences = text.match(/[^.!?]+[.!?]+/g) || [];
+  for (const sentence of sentences) {
+    const trimmed = sentence.trim();
+    if (trimmed.length > 40 && trimmed.length < 400) {
+      const twoSentences = sentences.slice(0, 2).join("").trim();
+      return twoSentences.length < 400 ? twoSentences : trimmed;
+    }
+  }
+  return text.slice(0, 300);
+}
+
+function extractHtmlFromSource(source: string): string | null {
+  const parts = source.split(/--[^\r\n]+\r\n/);
+  for (const part of parts) {
+    if (/Content-Type:\s*text\/html/i.test(part)) {
+      const isQP = /Content-Transfer-Encoding:\s*quoted-printable/i.test(part);
+      const isBase64 = /Content-Transfer-Encoding:\s*base64/i.test(part);
+      const bodyStart = part.indexOf("\r\n\r\n");
+      if (bodyStart === -1) continue;
+      let body = part.substring(bodyStart + 4);
+      if (isQP) {
+        body = decodeQuotedPrintable(body);
+      } else if (isBase64) {
+        try {
+          body = Buffer.from(body.replace(/\r\n/g, ""), "base64").toString("utf8");
+        } catch { continue; }
+      }
+      return body;
+    }
+  }
+  const htmlMatch = source.match(/Content-Type: text\/html[\s\S]*?\r\n\r\n([\s\S]*?)(?=\r\n--[^\r\n]+|\r\n\.\r\n|$)/i);
+  if (htmlMatch) return decodeQuotedPrintable(htmlMatch[1]);
+  return null;
 }
 
 export interface EmailImportResult {
@@ -209,18 +342,11 @@ export async function checkEmails(): Promise<EmailImportResult> {
   const port = parseInt(process.env.IMAP_PORT || "993");
   const user = process.env.IMAP_USER;
   const pass = process.env.IMAP_PASSWORD;
+  const gmailLabel = process.env.PR_IMPORT_LABEL || "PR-Import";
+  const autoPublish = process.env.PR_AUTO_PUBLISH === "true";
 
   if (!host || !user || !pass) {
     result.errors.push("IMAP credentials not configured");
-    return result;
-  }
-
-  const approvedSenders = await prisma.approvedSender.findMany({
-    where: { active: true },
-  });
-
-  if (approvedSenders.length === 0) {
-    result.errors.push("No approved senders configured");
     return result;
   }
 
@@ -237,221 +363,126 @@ export async function checkEmails(): Promise<EmailImportResult> {
 
     await client.connect();
 
-    // Collect all labels to check
-    const labelsToCheck = new Set<string>();
-    labelsToCheck.add("INBOX");
-    for (const sender of approvedSenders) {
-      if (sender.gmailLabel && sender.gmailLabel.trim()) {
-        labelsToCheck.add(sender.gmailLabel.trim());
-      }
+    let lock;
+    try {
+      lock = await client.getMailboxLock(gmailLabel);
+    } catch {
+      result.errors.push(`Could not open Gmail label: "${gmailLabel}". Make sure this label exists in Gmail.`);
+      await client.logout();
+      return result;
     }
 
-    for (const mailbox of labelsToCheck) {
-      let lock;
-      try {
-        lock = await client.getMailboxLock(mailbox);
-      } catch {
-        result.errors.push(`Could not open mailbox: ${mailbox}`);
-        continue;
+    try {
+      const status = await client.status(gmailLabel, { messages: true });
+
+      if (status.messages === 0) {
+        return result;
       }
 
-      try {
-        // Fetch ALL messages, not just unseen
-        const status = await client.status(mailbox, { messages: true });
-        if (status.messages === 0) { lock.release(); continue; }
+      // Fetch emails
+      const messages = client.fetch(
+        "1:*",
+        { envelope: true, source: true }
+      );
 
-        const messages = client.fetch("1:*", { envelope: true, source: true });
+      for await (const msg of messages) {
+        result.processed++;
 
-        for await (const msg of messages) {
-          result.processed++;
+        try {
+          const msgId = msg.envelope?.messageId ||
+            `${msg.envelope?.from?.[0]?.address}-${msg.envelope?.date?.toISOString()}-${msg.uid}`;
 
-          try {
-            const from = msg.envelope?.from?.[0]?.address?.toLowerCase();
-            if (!from) { result.skipped++; continue; }
+          // Skip if already processed
+          const alreadyDone = await prisma.processedEmail.findUnique({
+            where: { messageId: msgId },
+          });
+          if (alreadyDone) {
+            result.alreadyProcessed++;
+            continue;
+          }
 
-            // Check if sender is approved
-            const sender = approvedSenders.find((s) => {
-              const sEmail = s.email.toLowerCase();
-              return from === sEmail || from.endsWith("@" + sEmail.split("@")[1]);
-            });
+          const source = msg.source?.toString() || "";
+          const htmlBody = extractHtmlFromSource(source);
 
-            if (!sender) { result.skipped++; continue; }
-
-            // If sender has a specific label, only process from that label
-            if (sender.gmailLabel && sender.gmailLabel.trim()) {
-              if (mailbox !== sender.gmailLabel.trim()) {
-                result.skipped++;
-                continue;
-              }
-            } else {
-              // Sender has no label, only process from INBOX
-              if (mailbox !== "INBOX") { result.skipped++; continue; }
-            }
-
-            // Create a unique message ID
-            const msgId = msg.envelope?.messageId || `${from}-${msg.envelope?.date?.toISOString() || ""}-${msg.uid}`;
-
-            // Check if already processed
-            const alreadyDone = await prisma.processedEmail.findUnique({
-              where: { messageId: msgId },
-            });
-
-            if (alreadyDone) {
-              result.alreadyProcessed++;
-              continue;
-            }
-
-            // Get email body
-            const source = msg.source?.toString() || "";
-            let bodyText = "";
-
-            // Check for charset encoding
-            const charsetMatch = source.match(/Content-Type: (?:text\/html|text\/plain)[\s\S]*?charset="?([^"\s;]+)"?/i);
-            const charset = charsetMatch ? charsetMatch[1].toUpperCase() : "UTF-8";
-
-            const textMatch = source.match(/Content-Type: text\/plain[\s\S]*?\r\n\r\n([\s\S]*?)(?=\r\n--|\r\n\.\r\n|$)/i);
-            const htmlMatch = source.match(/Content-Type: text\/html[\s\S]*?\r\n\r\n([\s\S]*?)(?=\r\n--|\r\n\.\r\n|$)/i);
-
-            if (textMatch) {
-              bodyText = textMatch[1];
-              // Handle quoted-printable encoding
-              bodyText = bodyText.replace(/=\r\n/g, "").replace(/=([0-9A-F]{2})/gi, (_, hex) => {
-                const byte = parseInt(hex, 16);
-                // Handle ISO-8859-1 to UTF-8 conversion for special characters
-                if (charset === "ISO-8859-1" || charset === "WINDOWS-1252") {
-                  if (byte >= 0x80 && byte <= 0xFF) {
-                    // Convert ISO-8859-1 byte to UTF-8
-                    return String.fromCharCode(byte);
-                  }
-                }
-                return String.fromCharCode(byte);
-              });
-              // Decode HTML entities
-              bodyText = decodeHtmlEntities(bodyText);
-            } else if (htmlMatch) {
-              let htmlContent = htmlMatch[1];
-              // Handle quoted-printable encoding in HTML
-              htmlContent = htmlContent.replace(/=\r\n/g, "").replace(/=([0-9A-F]{2})/gi, (_, hex) => {
-                const byte = parseInt(hex, 16);
-                // Handle ISO-8859-1 to UTF-8 conversion for special characters
-                if (charset === "ISO-8859-1" || charset === "WINDOWS-1252") {
-                  if (byte >= 0x80 && byte <= 0xFF) {
-                    // Convert ISO-8859-1 byte to UTF-8
-                    return String.fromCharCode(byte);
-                  }
-                }
-                return String.fromCharCode(byte);
-              });
-              bodyText = stripHtml(htmlContent);
-            } else {
-              const headerEnd = source.indexOf("\r\n\r\n");
-              if (headerEnd !== -1) {
-                bodyText = stripHtml(source.substring(headerEnd + 4));
-              }
-            }
-
-            if (!bodyText || bodyText.length < 20) {
-              result.errors.push(`Empty email from ${from}: "${msg.envelope?.subject}"`);
-              // Still mark as processed so we don't retry
-              await prisma.processedEmail.create({
-                data: { messageId: msgId, sender: from, subject: msg.envelope?.subject },
-              });
-              continue;
-            }
-
-            // Extract content using sender's markers
-            const content = extractContent(bodyText, sender.startMarker || "", sender.endMarker || "");
-
-            if (!content || content.length < 20) {
-              result.errors.push(`Could not extract content from ${from}: "${msg.envelope?.subject}"`);
-              await prisma.processedEmail.create({
-                data: { messageId: msgId, sender: from, subject: msg.envelope?.subject },
-              });
-              continue;
-            }
-
-            // Use email subject as title, with proper title casing
-            let title = msg.envelope?.subject || "Untitled";
-            // Decode HTML entities from subject if present
-            title = decodeHtmlEntities(title);
-            // Apply title case: first letter of each word capitalized, rest lowercase
-            title = title
-              .split(/\s+/)
-              .map(word => {
-                if (word.length === 0) return word;
-                return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
-              })
-              .join(" ");
-            
-            const summary = extractSummary(content);
-            // Extract embedded images first (from email attachments), then HTTP images
-            const embeddedImages = extractEmbeddedImages(source);
-            const httpImages = extractImages(bodyText);
-            const allImages = [...embeddedImages, ...httpImages];
-            const featuredImage = allImages.length > 0 ? allImages[0] : null;
-            const videos = extractVideos(bodyText);
-
-            // Clean up URLs in content - remove angle brackets but keep the URLs
-            let cleanedBody = content
-              .replace(/<(https?:\/\/[^\s<>"]+)>/g, "$1")  // Remove angle brackets around URLs
-              .replace(/\s*\/\s*/g, " / ");  // Clean up slash spacing
-            
-            let body = cleanedBody;
-            if (videos.length > 0) {
-              body += "\n\n---\n\n";
-              videos.forEach((url) => {
-                const platform = url.includes("vimeo") ? "Vimeo" : "YouTube";
-                body += `Watch on ${platform}: ${url}\n`;
-              });
-            }
-
-            let slug = slugify(title);
-            const existingSlug = await prisma.newsArticle.findUnique({ where: { slug } });
-            if (existingSlug) {
-              slug = `${slug}-${Date.now().toString(36)}`;
-            }
-
-            const sourceUrl = `email-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-
-            await prisma.newsArticle.create({
+          if (!htmlBody || htmlBody.length < 20) {
+            result.errors.push(`No HTML body: "${msg.envelope?.subject}"`);
+            await prisma.processedEmail.create({
               data: {
-                title,
-                slug,
-                summary,
-                body,
-                sourceUrl,
-                imageUrl: featuredImage,
-                featured: false,
-                hidden: !sender.autoPublish,
-                manual: true,
-                sourceLabel: sender.sourceLabel || `${sender.name} (Email)`,  // Use sender's custom label or default
-                publishedAt: new Date(),
+                messageId: msgId,
+                sender: msg.envelope?.from?.[0]?.address || "unknown",
+                subject: msg.envelope?.subject,
               },
             });
-
-            // Mark as processed
-            await prisma.processedEmail.create({
-              data: { messageId: msgId, sender: from, subject: msg.envelope?.subject },
-            });
-
-            result.imported++;
-            result.articles.push(title);
-
-          } catch (msgError) {
-            result.errors.push(msgError instanceof Error ? msgError.message : "Unknown error");
+            continue;
           }
+
+          const { body, featuredImage } = cleanHtmlEmail(htmlBody);
+
+          if (!body || body.length < 20) {
+            result.errors.push(`Empty after cleaning: "${msg.envelope?.subject}"`);
+            await prisma.processedEmail.create({
+              data: {
+                messageId: msgId,
+                sender: msg.envelope?.from?.[0]?.address || "unknown",
+                subject: msg.envelope?.subject,
+              },
+            });
+            continue;
+          }
+
+          let title = msg.envelope?.subject || "Untitled";
+          title = decodeHtmlEntities(title);
+          title = title.replace(/^(re|fwd|fw):\s*/gi, "").trim();
+
+          const summary = extractSummaryFromHtml(body);
+          const from = msg.envelope?.from?.[0]?.address || "unknown";
+          const fromName = msg.envelope?.from?.[0]?.name || from;
+
+          let slug = slugify(title);
+          const existingSlug = await prisma.newsArticle.findUnique({ where: { slug } });
+          if (existingSlug) slug = `${slug}-${Date.now().toString(36)}`;
+
+          const sourceUrl = `email-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+
+          await prisma.newsArticle.create({
+            data: {
+              title,
+              slug,
+              summary,
+              body,
+              sourceUrl,
+              imageUrl: featuredImage,
+              featured: false,
+              hidden: !autoPublish,
+              manual: true,
+              sourceLabel: `${fromName} (PR)`,
+              publishedAt: new Date(),
+            },
+          });
+
+          await prisma.processedEmail.create({
+            data: {
+              messageId: msgId,
+              sender: from,
+              subject: msg.envelope?.subject,
+            },
+          });
+
+          result.imported++;
+          result.articles.push(title);
+
+        } catch (msgError) {
+          result.errors.push(msgError instanceof Error ? msgError.message : "Unknown error");
         }
-      } finally {
-        lock.release();
       }
+    } finally {
+      lock.release();
     }
 
     await client.logout();
   } catch (connError) {
     result.errors.push(connError instanceof Error ? connError.message : "Connection error");
-    if (client) {
-      try { await client.logout(); } catch {}
-    }
+    if (client) { try { await client.logout(); } catch {} }
   }
 
   return result;

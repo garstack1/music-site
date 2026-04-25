@@ -1,0 +1,25 @@
+name: Email Monitor
+on:
+  schedule:
+    - cron: '*/30 * * * *'
+  workflow_dispatch:
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check emails for PR imports
+        run: |
+          response=$(curl -s -L -w "\n%{http_code}" -X POST \
+            "${{ secrets.SITE_URL }}/api/cron/check-emails" \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}")
+          http_code=$(echo "$response" | tail -n1)
+          body=$(echo "$response" | sed '$d')
+          echo "Response: $body"
+          echo "HTTP Code: $http_code"
+          if [ "$http_code" != "200" ]; then
+            echo "Email check failed with status $http_code"
+            exit 1
+          fi
+          echo "Email check completed successfully"

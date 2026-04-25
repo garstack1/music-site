@@ -74,58 +74,52 @@ export default async function ArticlePage({
           )}
           {article.body && (
             <div className="prose prose-invert max-w-none">
-              {article.body.split("\n").map((line, i) => {
-                // Clean the line of special characters
-                const cleanedLine = cleanSpecialCharacters(line);
-                
-                // Skip empty lines but preserve them visually
-                if (!cleanedLine.trim()) {
-                  return <div key={i} className="h-2" />;
-                }
-                
-                // Check if line is a YouTube link - render as embed
-                const youtubeMatch = cleanedLine.match(/(?:https?:\/\/)?(?:www\.)?(?:youtu\.be\/|youtube\.com\/watch\?v=)([a-zA-Z0-9_-]+)/);
-                if (youtubeMatch) {
+              {article.body.includes('<') && article.body.includes('>') ? (
+                <div dangerouslySetInnerHTML={{ __html: article.body }} />
+              ) : (
+                article.body.split("\n").map((line, i) => {
+                  const cleanedLine = cleanSpecialCharacters(line);
+                  if (!cleanedLine.trim()) {
+                    return <div key={i} className="h-2" />;
+                  }
+                  const youtubeMatch = cleanedLine.match(/(?:https?:\/\/)?(?:www\.)?(?:youtu\.be\/|youtube\.com\/watch\?v=)([a-zA-Z0-9_-]+)/);
+                  if (youtubeMatch) {
+                    return (
+                      <div key={i} className="my-6 rounded-lg overflow-hidden">
+                        <iframe
+                          width="100%"
+                          height="400"
+                          src={`https://www.youtube.com/embed/${youtubeMatch[1]}`}
+                          title="YouTube video"
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                          allowFullScreen
+                          className="w-full"
+                        />
+                      </div>
+                    );
+                  }
+                  if (cleanedLine.trim().startsWith("•")) {
+                    return (
+                      <div key={i} className="flex gap-3 text-light-text leading-relaxed mb-2">
+                        <span className="text-brand">•</span>
+                        <span>{cleanedLine.substring(1).trim()}</span>
+                      </div>
+                    );
+                  }
+                  if (cleanedLine === cleanedLine.toUpperCase() && cleanedLine.length > 5 && cleanedLine.length < 100) {
+                    return (
+                      <h3 key={i} className="text-lg font-bold text-light-text mt-4 mb-2">
+                        {cleanedLine}
+                      </h3>
+                    );
+                  }
                   return (
-                    <div key={i} className="my-6 rounded-lg overflow-hidden">
-                      <iframe
-                        width="100%"
-                        height="400"
-                        src={`https://www.youtube.com/embed/${youtubeMatch[1]}`}
-                        title="YouTube video"
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                        allowFullScreen
-                        className="w-full"
-                      />
-                    </div>
-                  );
-                }
-                
-                // Check if line is part of a list
-                if (cleanedLine.trim().startsWith("•")) {
-                  return (
-                    <div key={i} className="flex gap-3 text-light-text leading-relaxed mb-2">
-                      <span className="text-brand">•</span>
-                      <span>{cleanedLine.substring(1).trim()}</span>
-                    </div>
-                  );
-                }
-                
-                // Check if line looks like a bold heading (common in press releases)
-                if (cleanedLine === cleanedLine.toUpperCase() && cleanedLine.length > 5 && cleanedLine.length < 100) {
-                  return (
-                    <h3 key={i} className="text-lg font-bold text-light-text mt-4 mb-2">
+                    <p key={i} className="text-light-text leading-relaxed mb-4">
                       {cleanedLine}
-                    </h3>
+                    </p>
                   );
-                }
-                
-                return (
-                  <p key={i} className="text-light-text leading-relaxed mb-4">
-                    {cleanedLine}
-                  </p>
-                );
-              })}
+                })
+              )}
             </div>
           )}
           {article.sourceUrl && article.sourceUrl !== "https://example.com" && (
