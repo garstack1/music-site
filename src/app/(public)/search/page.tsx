@@ -39,11 +39,47 @@ interface Review {
   coverImage: string | null;
 }
 
+interface EditorialPost {
+  id: string;
+  title: string;
+  slug: string;
+  type: string;
+  excerpt: string | null;
+  coverImage: string | null;
+  festivalTag: string | null;
+  publishedAt: string | null;
+}
+
+const EDITORIAL_TYPE_LABELS: Record<string, string> = {
+  FESTIVAL_PREVIEW: "Festival Preview",
+  FESTIVAL_UPDATE: "Festival Update",
+  FESTIVAL_RECAP: "Festival Recap",
+  CONCERT_REVIEW: "Concert Review",
+  FEATURE: "Feature",
+};
+
+const EDITORIAL_TYPE_COLOURS: Record<string, string> = {
+  FESTIVAL_PREVIEW: "bg-blue-100 text-blue-700",
+  FESTIVAL_UPDATE: "bg-purple-100 text-purple-700",
+  FESTIVAL_RECAP: "bg-teal-100 text-teal-700",
+  CONCERT_REVIEW: "bg-orange-100 text-orange-700",
+  FEATURE: "bg-pink-100 text-pink-700",
+};
+
+const EDITORIAL_TYPE_LINKS: Record<string, string> = {
+  FESTIVAL_PREVIEW: "/festivals",
+  FESTIVAL_UPDATE: "/festivals",
+  FESTIVAL_RECAP: "/festivals",
+  CONCERT_REVIEW: "/features",
+  FEATURE: "/features",
+};
+
 export default function SearchPage() {
   const [query, setQuery] = useState("");
   const [news, setNews] = useState<NewsArticle[]>([]);
   const [events, setEvents] = useState<Event[]>([]);
   const [reviews, setReviews] = useState<Review[]>([]);
+  const [editorial, setEditorial] = useState<EditorialPost[]>([]);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
 
@@ -52,6 +88,7 @@ export default function SearchPage() {
       setNews([]);
       setEvents([]);
       setReviews([]);
+      setEditorial([]);
       setSearched(false);
       return;
     }
@@ -63,6 +100,7 @@ export default function SearchPage() {
       setNews(data.news || []);
       setEvents(data.events || []);
       setReviews(data.reviews || []);
+      setEditorial(data.editorial || []);
       setSearched(true);
     } catch {
       // ignore
@@ -78,7 +116,7 @@ export default function SearchPage() {
     return () => clearTimeout(timer);
   }, [query, doSearch]);
 
-  const totalResults = news.length + events.length + reviews.length;
+  const totalResults = news.length + events.length + reviews.length + editorial.length;
 
   return (
     <>
@@ -90,7 +128,7 @@ export default function SearchPage() {
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search news, events, reviews..."
+              placeholder="Search news, events, reviews, festivals, features..."
               autoFocus
               className="w-full px-5 py-3 bg-dark-surface border border-dark-border text-dark-text text-lg placeholder-dark-muted focus:outline-none focus:border-brand transition-colors rounded-none"
             />
@@ -112,8 +150,67 @@ export default function SearchPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           {!searched && !loading && (
             <p className="text-light-muted text-sm text-center py-8">
-              Start typing to search across news, events, and reviews.
+              Start typing to search across news, events, reviews, festivals and features.
             </p>
+          )}
+
+          {/* Editorial Results — Festivals & Features */}
+          {editorial.length > 0 && (
+            <div className="mb-10">
+              <h2 className="text-xl font-bold mb-4">
+                <span className="text-brand">Festivals & Features</span> ({editorial.length})
+              </h2>
+              <div className="space-y-4">
+                {editorial.map((post) => {
+                  const section = EDITORIAL_TYPE_LINKS[post.type] || "/features";
+                  const href = `${section}/${post.slug}`;
+                  return (
+                    <Link
+                      key={post.id}
+                      href={href}
+                      className="flex gap-4 items-start border-b border-light-border pb-4 group"
+                    >
+                      {post.coverImage && (
+                        <div className="w-24 h-16 shrink-0 bg-light-surface overflow-hidden hidden sm:block">
+                          <img
+                            src={post.coverImage}
+                            alt=""
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                      )}
+                      <div className="flex-1">
+                        <h3 className="font-semibold group-hover:text-brand transition-colors">
+                          {post.title}
+                        </h3>
+                        {post.excerpt && (
+                          <p className="text-light-muted text-sm mt-1 line-clamp-1">
+                            {post.excerpt}
+                          </p>
+                        )}
+                        <div className="flex items-center gap-2 mt-1 flex-wrap">
+                          <span className={`text-xs font-medium px-2 py-0.5 rounded ${EDITORIAL_TYPE_COLOURS[post.type] || "bg-light-surface text-light-muted"}`}>
+                            {EDITORIAL_TYPE_LABELS[post.type] || post.type}
+                          </span>
+                          {post.festivalTag && (
+                            <span className="text-xs text-light-muted">
+                              #{post.festivalTag}
+                            </span>
+                          )}
+                          {post.publishedAt && (
+                            <span className="text-xs text-light-muted">
+                              {new Date(post.publishedAt).toLocaleDateString("en-IE", {
+                                day: "numeric", month: "short", year: "numeric",
+                              })}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
           )}
 
           {/* News Results */}
@@ -251,6 +348,14 @@ export default function SearchPage() {
                   </Link>
                 ))}
               </div>
+            </div>
+          )}
+
+          {/* No results */}
+          {searched && !loading && totalResults === 0 && (
+            <div className="text-center py-12">
+              <p className="text-light-muted text-lg mb-2">No results found for &quot;{query}&quot;</p>
+              <p className="text-light-muted text-sm">Try different keywords or check your spelling</p>
             </div>
           )}
         </div>

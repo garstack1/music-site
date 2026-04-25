@@ -4,14 +4,13 @@ import { getSession } from "@/lib/auth";
 
 export async function GET(request: NextRequest) {
   const query = request.nextUrl.searchParams.get("q")?.trim();
-
   if (!query || query.length < 2) {
-    return NextResponse.json({ news: [], events: [], reviews: [] });
+    return NextResponse.json({ news: [], events: [], reviews: [], editorial: [] });
   }
 
   const session = await getSession();
-
   const searchTerms = query.split(/\s+/).filter(Boolean);
+
   const containsAll = searchTerms.map((term) => ({
     OR: [
       { title: { contains: term, mode: "insensitive" as const } },
@@ -38,7 +37,19 @@ export async function GET(request: NextRequest) {
     ],
   }));
 
-  const [news, events, reviews] = await Promise.all([
+  const editorialContainsAll = searchTerms.map((term) => ({
+    OR: [
+      { title: { contains: term, mode: "insensitive" as const } },
+      { excerpt: { contains: term, mode: "insensitive" as const } },
+      { body: { contains: term, mode: "insensitive" as const } },
+      { festivalTag: { contains: term, mode: "insensitive" as const } },
+      { galleryArtist: { contains: term, mode: "insensitive" as const } },
+      { galleryVenue: { contains: term, mode: "insensitive" as const } },
+      { galleryEvent: { contains: term, mode: "insensitive" as const } },
+    ],
+  }));
+
+  const [news, events, reviews, editorial] = await Promise.all([
     prisma.newsArticle.findMany({
       where: {
         hidden: false,
@@ -68,7 +79,25 @@ export async function GET(request: NextRequest) {
       orderBy: { createdAt: "desc" },
       take: 10,
     }),
+    prisma.editorialPost.findMany({
+      where: {
+        status: "PUBLISHED",
+        AND: editorialContainsAll,
+      },
+      orderBy: { publishedAt: "desc" },
+      take: 10,
+      select: {
+        id: true,
+        title: true,
+        slug: true,
+        type: true,
+        excerpt: true,
+        coverImage: true,
+        festivalTag: true,
+        publishedAt: true,
+      },
+    }),
   ]);
 
-  return NextResponse.json({ news, events, reviews });
+  return NextResponse.json({ news, events, reviews, editorial });
 }
