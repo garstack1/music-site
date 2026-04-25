@@ -39,9 +39,6 @@ export default function AdminLayout({
                 <Link href="/admin/editorial" className="text-dark-muted hover:text-dark-text text-xs transition-colors">
                   Editorial
                 </Link>
-                <Link href="/admin/reviews" className="text-dark-muted hover:text-dark-text text-xs transition-colors">
-                  Reviews
-                </Link>
                 <Link href="/admin/competitions" className="text-dark-muted hover:text-dark-text text-xs transition-colors">
                   Competitions
                 </Link>

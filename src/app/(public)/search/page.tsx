@@ -28,17 +28,6 @@ interface Event {
   genre: string | null;
 }
 
-interface Review {
-  id: string;
-  title: string;
-  slug: string;
-  artist: string;
-  venue: string;
-  city: string | null;
-  eventDate: string;
-  coverImage: string | null;
-}
-
 interface EditorialPost {
   id: string;
   title: string;
@@ -78,7 +67,6 @@ export default function SearchPage() {
   const [query, setQuery] = useState("");
   const [news, setNews] = useState<NewsArticle[]>([]);
   const [events, setEvents] = useState<Event[]>([]);
-  const [reviews, setReviews] = useState<Review[]>([]);
   const [editorial, setEditorial] = useState<EditorialPost[]>([]);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
@@ -87,7 +75,6 @@ export default function SearchPage() {
     if (q.length < 2) {
       setNews([]);
       setEvents([]);
-      setReviews([]);
       setEditorial([]);
       setSearched(false);
       return;
@@ -99,7 +86,6 @@ export default function SearchPage() {
       const data = await res.json();
       setNews(data.news || []);
       setEvents(data.events || []);
-      setReviews(data.reviews || []);
       setEditorial(data.editorial || []);
       setSearched(true);
     } catch {
@@ -116,7 +102,7 @@ export default function SearchPage() {
     return () => clearTimeout(timer);
   }, [query, doSearch]);
 
-  const totalResults = news.length + events.length + reviews.length + editorial.length;
+  const totalResults = news.length + events.length + editorial.length;
 
   return (
     <>
@@ -128,7 +114,7 @@ export default function SearchPage() {
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search news, events, reviews, festivals, features..."
+              placeholder="Search news, events, festivals, features..."
               autoFocus
               className="w-full px-5 py-3 bg-dark-surface border border-dark-border text-dark-text text-lg placeholder-dark-muted focus:outline-none focus:border-brand transition-colors rounded-none"
             />
@@ -150,11 +136,11 @@ export default function SearchPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           {!searched && !loading && (
             <p className="text-light-muted text-sm text-center py-8">
-              Start typing to search across news, events, reviews, festivals and features.
+              Start typing to search across news, events, festivals and features.
             </p>
           )}
 
-          {/* Editorial Results — Festivals & Features */}
+          {/* Editorial Results */}
           {editorial.length > 0 && (
             <div className="mb-10">
               <h2 className="text-xl font-bold mb-4">
@@ -172,11 +158,7 @@ export default function SearchPage() {
                     >
                       {post.coverImage && (
                         <div className="w-24 h-16 shrink-0 bg-light-surface overflow-hidden hidden sm:block">
-                          <img
-                            src={post.coverImage}
-                            alt=""
-                            className="w-full h-full object-cover"
-                          />
+                          <img src={post.coverImage} alt="" className="w-full h-full object-cover" />
                         </div>
                       )}
                       <div className="flex-1">
@@ -184,18 +166,14 @@ export default function SearchPage() {
                           {post.title}
                         </h3>
                         {post.excerpt && (
-                          <p className="text-light-muted text-sm mt-1 line-clamp-1">
-                            {post.excerpt}
-                          </p>
+                          <p className="text-light-muted text-sm mt-1 line-clamp-1">{post.excerpt}</p>
                         )}
                         <div className="flex items-center gap-2 mt-1 flex-wrap">
                           <span className={`text-xs font-medium px-2 py-0.5 rounded ${EDITORIAL_TYPE_COLOURS[post.type] || "bg-light-surface text-light-muted"}`}>
                             {EDITORIAL_TYPE_LABELS[post.type] || post.type}
                           </span>
                           {post.festivalTag && (
-                            <span className="text-xs text-light-muted">
-                              #{post.festivalTag}
-                            </span>
+                            <span className="text-xs text-light-muted">#{post.festivalTag}</span>
                           )}
                           {post.publishedAt && (
                             <span className="text-xs text-light-muted">
@@ -228,11 +206,7 @@ export default function SearchPage() {
                   >
                     {article.imageUrl && (
                       <div className="w-24 h-16 shrink-0 bg-light-surface overflow-hidden hidden sm:block">
-                        <img
-                          src={article.imageUrl}
-                          alt=""
-                          className="w-full h-full object-cover"
-                        />
+                        <img src={article.imageUrl} alt="" className="w-full h-full object-cover" />
                       </div>
                     )}
                     <div className="flex-1">
@@ -240,9 +214,7 @@ export default function SearchPage() {
                         {article.title}
                       </h3>
                       {article.summary && (
-                        <p className="text-light-muted text-sm mt-1 line-clamp-1">
-                          {article.summary}
-                        </p>
+                        <p className="text-light-muted text-sm mt-1 line-clamp-1">{article.summary}</p>
                       )}
                       <div className="flex items-center gap-2 mt-1">
                         {article.rssFeed && (
@@ -305,47 +277,6 @@ export default function SearchPage() {
                       <SaveEventButton eventId={event.id} />
                     </div>
                   </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Review Results */}
-          {reviews.length > 0 && (
-            <div>
-              <h2 className="text-xl font-bold mb-4">
-                <span className="text-brand">Reviews</span> ({reviews.length})
-              </h2>
-              <div className="space-y-4">
-                {reviews.map((review) => (
-                  <Link
-                    key={review.id}
-                    href={`/reviews/${review.slug}`}
-                    className="flex gap-4 items-start border-b border-light-border pb-4 group"
-                  >
-                    {review.coverImage && (
-                      <div className="w-24 h-16 shrink-0 bg-light-surface overflow-hidden hidden sm:block">
-                        <img
-                          src={review.coverImage}
-                          alt=""
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                    )}
-                    <div className="flex-1">
-                      <h3 className="font-semibold group-hover:text-brand transition-colors">
-                        {review.title}
-                      </h3>
-                      <p className="text-light-muted text-sm mt-1">
-                        {review.artist} {"—"} {[review.venue, review.city].filter(Boolean).join(", ")}
-                      </p>
-                      <span className="text-xs text-light-muted">
-                        {new Date(review.eventDate).toLocaleDateString("en-IE", {
-                          day: "numeric", month: "short", year: "numeric",
-                        })}
-                      </span>
-                    </div>
-                  </Link>
                 ))}
               </div>
             </div>

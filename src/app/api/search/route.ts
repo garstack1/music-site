@@ -5,7 +5,7 @@ import { getSession } from "@/lib/auth";
 export async function GET(request: NextRequest) {
   const query = request.nextUrl.searchParams.get("q")?.trim();
   if (!query || query.length < 2) {
-    return NextResponse.json({ news: [], events: [], reviews: [], editorial: [] });
+    return NextResponse.json({ news: [], events: [], editorial: [] });
   }
 
   const session = await getSession();
@@ -28,15 +28,6 @@ export async function GET(request: NextRequest) {
     ],
   }));
 
-  const reviewContainsAll = searchTerms.map((term) => ({
-    OR: [
-      { title: { contains: term, mode: "insensitive" as const } },
-      { artist: { contains: term, mode: "insensitive" as const } },
-      { venue: { contains: term, mode: "insensitive" as const } },
-      { body: { contains: term, mode: "insensitive" as const } },
-    ],
-  }));
-
   const editorialContainsAll = searchTerms.map((term) => ({
     OR: [
       { title: { contains: term, mode: "insensitive" as const } },
@@ -49,12 +40,9 @@ export async function GET(request: NextRequest) {
     ],
   }));
 
-  const [news, events, reviews, editorial] = await Promise.all([
+  const [news, events, editorial] = await Promise.all([
     prisma.newsArticle.findMany({
-      where: {
-        hidden: false,
-        AND: containsAll,
-      },
+      where: { hidden: false, AND: containsAll },
       orderBy: { publishedAt: "desc" },
       take: 10,
       include: {
@@ -71,19 +59,8 @@ export async function GET(request: NextRequest) {
       orderBy: { date: "asc" },
       take: 10,
     }),
-    prisma.review.findMany({
-      where: {
-        status: "PUBLISHED",
-        AND: reviewContainsAll,
-      },
-      orderBy: { createdAt: "desc" },
-      take: 10,
-    }),
     prisma.editorialPost.findMany({
-      where: {
-        status: "PUBLISHED",
-        AND: editorialContainsAll,
-      },
+      where: { status: "PUBLISHED", AND: editorialContainsAll },
       orderBy: { publishedAt: "desc" },
       take: 10,
       select: {
@@ -99,5 +76,5 @@ export async function GET(request: NextRequest) {
     }),
   ]);
 
-  return NextResponse.json({ news, events, reviews, editorial });
+  return NextResponse.json({ news, events, editorial });
 }

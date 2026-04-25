@@ -41,9 +41,6 @@ export default function Header() {
             <Link href="/festivals" className="text-dark-muted hover:text-dark-text transition-colors text-sm tracking-wide">
               Festivals
             </Link>
-            <Link href="/reviews" className="text-dark-muted hover:text-dark-text transition-colors text-sm tracking-wide">
-              Reviews
-            </Link>
             <Link href="/features" className="text-dark-muted hover:text-dark-text transition-colors text-sm tracking-wide">
               Features
             </Link>
@@ -148,9 +145,6 @@ export default function Header() {
             </Link>
             <Link href="/festivals" className="text-dark-muted hover:text-dark-text text-sm tracking-wide" onClick={() => setMobileMenuOpen(false)}>
               Festivals
-            </Link>
-            <Link href="/reviews" className="text-dark-muted hover:text-dark-text text-sm tracking-wide" onClick={() => setMobileMenuOpen(false)}>
-              Reviews
             </Link>
             <Link href="/features" className="text-dark-muted hover:text-dark-text text-sm tracking-wide" onClick={() => setMobileMenuOpen(false)}>
               Features
