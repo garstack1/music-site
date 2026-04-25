@@ -1,0 +1,27 @@
+name: Publish Scheduled Posts
+on:
+  schedule:
+    # Run every 15 minutes
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+    # Allow manual trigger from GitHub Actions tab
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Publish Scheduled Editorial Posts
+        run: |
+          response=$(curl -s -L -w "\n%{http_code}" -X POST \
+            "${{ secrets.SITE_URL }}/api/cron/publish-scheduled" \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}")
+          http_code=$(echo "$response" | tail -n1)
+          body=$(echo "$response" | sed '$d')
+          echo "Response: $body"
+          echo "HTTP Code: $http_code"
+          if [ "$http_code" != "200" ]; then
+            echo "Publish failed with status $http_code"
+            exit 1
+          fi
+          echo "Scheduled posts published successfully"

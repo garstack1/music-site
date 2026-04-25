@@ -3,7 +3,6 @@
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Image from "@tiptap/extension-image";
-import Link from "@tiptap/extension-link";
 import Placeholder from "@tiptap/extension-placeholder";
 import CharacterCount from "@tiptap/extension-character-count";
 import Youtube from "@tiptap/extension-youtube";
@@ -21,7 +20,6 @@ export default function RichTextEditor({ value, onChange, placeholder }: RichTex
     extensions: [
       StarterKit,
       Image.configure({ inline: false, allowBase64: true }),
-      Link.configure({ openOnClick: false, HTMLAttributes: { class: "text-brand underline" } }),
       Placeholder.configure({ placeholder: placeholder || "Start writing..." }),
       CharacterCount,
       Youtube.configure({ controls: true, nocookie: true }),
