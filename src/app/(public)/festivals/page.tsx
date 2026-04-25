@@ -28,7 +28,10 @@ const TYPE_COLOURS: Record<string, string> = {
 
 function FestivalCard({ post }: { post: EditorialPost }) {
   return (
-    <Link href={`/festivals/${post.slug}`} className="group block bg-white border border-light-border hover:border-brand transition-colors overflow-hidden">
+    <Link
+      href={`/festivals/${post.slug}`}
+      className="group block bg-white border border-light-border hover:border-brand transition-colors overflow-hidden"
+    >
       <div className="aspect-video bg-light-surface overflow-hidden relative">
         {post.coverImage ? (
           <img
@@ -115,8 +118,13 @@ export default function FestivalsPage() {
   const [posts, setPosts] = useState<EditorialPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedYear, setSelectedYear] = useState<string>("ALL");
+  const [selectedTag, setSelectedTag] = useState<string | null>(null);
 
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const tag = params.get("tag");
+    if (tag) setSelectedTag(tag);
+
     fetch("/api/editorial?category=FESTIVALS&limit=200")
       .then((r) => r.json())
       .then((data) => setPosts(data.posts || []))
@@ -133,14 +141,21 @@ export default function FestivalsPage() {
     return [...y].sort().reverse();
   }, [posts]);
 
-  // Filter by year if selected
+  // Filter by year and tag
   const filtered = useMemo(() => {
-    if (selectedYear === "ALL") return posts;
-    return posts.filter((p) => {
-      if (!p.publishedAt) return false;
-      return new Date(p.publishedAt).getFullYear().toString() === selectedYear;
-    });
-  }, [posts, selectedYear]);
+    let result = selectedYear === "ALL"
+      ? posts
+      : posts.filter((p) => {
+          if (!p.publishedAt) return false;
+          return new Date(p.publishedAt).getFullYear().toString() === selectedYear;
+        });
+
+    if (selectedTag) {
+      result = result.filter((p) => p.festivalTag === selectedTag);
+    }
+
+    return result;
+  }, [posts, selectedYear, selectedTag]);
 
   // Group by festival tag
   const grouped = useMemo(() => {
@@ -156,7 +171,6 @@ export default function FestivalsPage() {
       }
     });
 
-    // Sort each group — preview first, then updates, then recap
     const typeOrder = ["FESTIVAL_PREVIEW", "FESTIVAL_UPDATE", "FESTIVAL_RECAP"];
     Object.keys(groups).forEach((tag) => {
       groups[tag].sort((a, b) => typeOrder.indexOf(a.type) - typeOrder.indexOf(b.type));
@@ -196,6 +210,25 @@ export default function FestivalsPage() {
         </div>
       )}
 
+      {/* Tag filter indicator */}
+      {selectedTag && (
+        <div className="flex items-center gap-2 mb-8">
+          <span className="text-light-muted text-sm">
+            Showing:{" "}
+            <strong className="text-light-text capitalize">
+              {selectedTag.replace(/-/g, " ")}
+            </strong>
+          </span>
+          <button
+            onClick={() => setSelectedTag(null)}
+            className="text-brand hover:text-brand-hover text-sm transition-colors"
+          >
+            ✕ Clear filter
+          </button>
+        </div>
+      )}
+
+
       {loading ? (
         <div className="space-y-8">
           {[...Array(3)].map((_, i) => (
@@ -219,21 +252,20 @@ export default function FestivalsPage() {
         <div className="text-center py-16 border border-light-border">
           <div className="text-4xl mb-4">🎪</div>
           <p className="text-light-muted">No festival content published yet.</p>
-          <p className="text-light-muted text-sm mt-1">Check back soon for previews and coverage.</p>
+          <p className="text-light-muted text-sm mt-1">
+            Check back soon for previews and coverage.
+          </p>
         </div>
       ) : (
         <div>
-          {/* Tagged festival groups */}
           {Object.entries(grouped.groups).map(([tag, tagPosts], index) => (
             <FestivalGroup
               key={tag}
               tag={tag}
               posts={tagPosts}
-              defaultOpen={index === 0 || selectedYear === currentYear}
+              defaultOpen={index === 0 || selectedYear === currentYear || selectedTag === tag}
             />
           ))}
-
-          {/* Untagged posts */}
           {grouped.untagged.length > 0 && (
             <FestivalGroup
               tag="other"

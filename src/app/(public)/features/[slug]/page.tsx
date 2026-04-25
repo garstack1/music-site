@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Metadata } from "next";
 import GallerySection from "@/components/GallerySection";
+import RelatedPosts from "@/components/RelatedPosts";
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -66,6 +67,26 @@ export default async function FeaturePostPage({ params }: PageProps) {
   });
 
   if (!post) notFound();
+
+  // Fetch related posts
+  const related = await prisma.editorialPost.findMany({
+    where: {
+      status: "PUBLISHED",
+      NOT: { slug },
+      type: { in: ["FEATURE", "CONCERT_REVIEW"] },
+    },
+    select: {
+      id: true,
+      title: true,
+      slug: true,
+      type: true,
+      excerpt: true,
+      coverImage: true,
+      publishedAt: true,
+    },
+    orderBy: { publishedAt: "desc" },
+    take: 3,
+  });
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -147,6 +168,9 @@ export default async function FeaturePostPage({ params }: PageProps) {
           galleryEvent={post.galleryEvent || undefined}
         />
       )}
+
+      {/* Related posts */}
+      <RelatedPosts posts={related} title="More Features" />
 
       {/* Back link */}
       <div className="mt-12 pt-6 border-t border-light-border">

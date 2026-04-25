@@ -3,6 +3,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Metadata } from "next";
 import GallerySection from "@/components/GallerySection";
+import RelatedPosts from "@/components/RelatedPosts";
+
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -70,8 +72,9 @@ export default async function FestivalPostPage({ params }: PageProps) {
 
   if (!post) notFound();
 
-  // Fetch related posts
-  const related = post.festivalTag
+
+  // Fetch related posts — same festival tag first, fill with recent if needed
+  const taggedRelated = post.festivalTag
     ? await prisma.editorialPost.findMany({
         where: {
           festivalTag: post.festivalTag,
@@ -83,16 +86,55 @@ export default async function FestivalPostPage({ params }: PageProps) {
           title: true,
           slug: true,
           type: true,
+          excerpt: true,
           coverImage: true,
           publishedAt: true,
         },
-        take: 5,
+        take: 3,
       })
     : [];
 
+  // Count total tagged posts to know if we need a "see all" link
+  const totalTagged = post.festivalTag
+    ? await prisma.editorialPost.count({
+        where: {
+          festivalTag: post.festivalTag,
+          status: "PUBLISHED",
+          NOT: { slug },
+        },
+      })
+    : 0;
+
+  const related = taggedRelated.length >= 3
+    ? taggedRelated
+    : [
+        ...taggedRelated,
+        ...(await prisma.editorialPost.findMany({
+          where: {
+            status: "PUBLISHED",
+            NOT: {
+              slug: {
+                in: [slug, ...taggedRelated.map((p) => p.slug)],
+              },
+            },
+          },
+          select: {
+            id: true,
+            title: true,
+            slug: true,
+            type: true,
+            excerpt: true,
+            coverImage: true,
+            publishedAt: true,
+          },
+          orderBy: { publishedAt: "desc" },
+          take: 3 - taggedRelated.length,
+        })),
+      ];
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+      <div className="max-w-4xl mx-auto">
         {/* Main content */}
         <article className="lg:col-span-3">
           {/* Breadcrumb */}
@@ -185,6 +227,20 @@ export default async function FestivalPostPage({ params }: PageProps) {
             />
           )}
 
+          {/* Related posts */}
+          <RelatedPosts
+            posts={related}
+            title={post.festivalTag
+              ? `More from ${post.festivalTag.replace(/-/g, " ").replace(/\b\w/g, c => c.toUpperCase())}`
+              : "Related Content"}
+            seeAllLink={totalTagged >= 3 && post.festivalTag
+              ? `/festivals?tag=${post.festivalTag}`
+              : undefined}
+            seeAllLabel={totalTagged >= 3
+              ? `See all ${totalTagged + 1} articles`
+              : undefined}
+          />
+
           {/* Back link */}
           <div className="mt-12 pt-6 border-t border-light-border">
             <Link href="/festivals" className="text-brand hover:text-brand-hover text-sm transition-colors">
@@ -192,38 +248,6 @@ export default async function FestivalPostPage({ params }: PageProps) {
             </Link>
           </div>
         </article>
-
-        {/* Sidebar */}
-        <aside className="lg:col-span-1">
-          {related.length > 0 && (
-            <div className="sticky top-24">
-              <h3 className="text-light-text font-semibold text-sm uppercase tracking-wider mb-4 pb-2 border-b border-light-border">
-                More from this festival
-              </h3>
-              <div className="space-y-4">
-                {related.map((p) => (
-                  <Link key={p.id} href={`/festivals/${p.slug}`} className="group block">
-                    {p.coverImage && (
-                      <div className="aspect-video overflow-hidden mb-2">
-                        <img
-                          src={p.coverImage}
-                          alt={p.title}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                        />
-                      </div>
-                    )}
-                    <span className={`${TYPE_COLOURS[p.type] || "bg-brand"} text-white text-xs font-medium px-1.5 py-0.5 mb-1 inline-block`}>
-                      {TYPE_LABELS[p.type] || p.type}
-                    </span>
-                    <p className="text-light-text text-sm font-medium group-hover:text-brand transition-colors line-clamp-2">
-                      {p.title}
-                    </p>
-                  </Link>
-                ))}
-              </div>
-            </div>
-          )}
-        </aside>
       </div>
     </div>
   );
