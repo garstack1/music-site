@@ -11,7 +11,6 @@ export default function Header() {
   const { user, loading, logout } = useAuth();
 
   useEffect(() => {
-    // Fetch settings to check if email preferences is enabled
     fetch("/api/settings")
       .then((r) => r.json())
       .then((data) => {
@@ -39,8 +38,14 @@ export default function Header() {
             <Link href="/events" className="text-dark-muted hover:text-dark-text transition-colors text-sm tracking-wide">
               Events
             </Link>
+            <Link href="/festivals" className="text-dark-muted hover:text-dark-text transition-colors text-sm tracking-wide">
+              Festivals
+            </Link>
             <Link href="/reviews" className="text-dark-muted hover:text-dark-text transition-colors text-sm tracking-wide">
               Reviews
+            </Link>
+            <Link href="/features" className="text-dark-muted hover:text-dark-text transition-colors text-sm tracking-wide">
+              Features
             </Link>
             <Link href="/competitions" className="text-dark-muted hover:text-dark-text transition-colors text-sm tracking-wide">
               Competitions
@@ -141,8 +146,14 @@ export default function Header() {
             <Link href="/events" className="text-dark-muted hover:text-dark-text text-sm tracking-wide" onClick={() => setMobileMenuOpen(false)}>
               Events
             </Link>
+            <Link href="/festivals" className="text-dark-muted hover:text-dark-text text-sm tracking-wide" onClick={() => setMobileMenuOpen(false)}>
+              Festivals
+            </Link>
             <Link href="/reviews" className="text-dark-muted hover:text-dark-text text-sm tracking-wide" onClick={() => setMobileMenuOpen(false)}>
               Reviews
+            </Link>
+            <Link href="/features" className="text-dark-muted hover:text-dark-text text-sm tracking-wide" onClick={() => setMobileMenuOpen(false)}>
+              Features
             </Link>
             <Link href="/competitions" className="text-dark-muted hover:text-dark-text text-sm tracking-wide" onClick={() => setMobileMenuOpen(false)}>
               Competitions

@@ -1,0 +1,150 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { useParams } from "next/navigation";
+import Link from "next/link";
+
+interface EditorialPost {
+  id: string;
+  title: string;
+  slug: string;
+  type: string;
+  excerpt: string | null;
+  body: string;
+  coverImage: string | null;
+  publishedAt: string | null;
+}
+
+const TYPE_LABELS: Record<string, string> = {
+  FEATURE: "Feature",
+  CONCERT_REVIEW: "Concert Review",
+};
+
+const TYPE_COLOURS: Record<string, string> = {
+  FEATURE: "bg-pink-600",
+  CONCERT_REVIEW: "bg-orange-600",
+};
+
+export default function FeaturePostPage() {
+  const params = useParams();
+  const slug = params.slug as string;
+  const [post, setPost] = useState<EditorialPost | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [notFound, setNotFound] = useState(false);
+
+  useEffect(() => {
+    fetch(`/api/editorial/${slug}`)
+      .then((r) => {
+        if (r.status === 404) { setNotFound(true); return null; }
+        return r.json();
+      })
+      .then((data) => {
+        if (!data) return;
+        setPost(data.post);
+      })
+      .catch(() => setNotFound(true))
+      .finally(() => setLoading(false));
+  }, [slug]);
+
+  if (loading) {
+    return (
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-pulse">
+        <div className="h-8 bg-light-surface rounded w-3/4 mb-4" />
+        <div className="aspect-video bg-light-surface rounded mb-8" />
+        <div className="space-y-3">
+          {[...Array(8)].map((_, i) => (
+            <div key={i} className="h-4 bg-light-surface rounded" />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (notFound || !post) {
+    return (
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center">
+        <p className="text-light-muted text-lg mb-4">Post not found.</p>
+        <Link href="/features" className="text-brand hover:text-brand-hover text-sm">
+          ← Back to Features
+        </Link>
+      </div>
+    );
+  }
+
+  return (
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* Breadcrumb */}
+      <div className="flex items-center gap-2 text-sm text-light-muted mb-6">
+        <Link href="/features" className="hover:text-brand transition-colors">Features</Link>
+        <span>→</span>
+        <span className="text-light-text line-clamp-1">{post.title}</span>
+      </div>
+
+      {/* Type badge */}
+      <div className="mb-4">
+        <span className={`${TYPE_COLOURS[post.type] || "bg-brand"} text-white text-xs font-medium px-2 py-1`}>
+          {TYPE_LABELS[post.type] || post.type}
+        </span>
+      </div>
+
+      {/* Title */}
+      <h1 className="text-light-text text-3xl font-bold leading-tight mb-4">
+        {post.title}
+      </h1>
+
+      {/* Meta */}
+      {post.publishedAt && (
+        <p className="text-light-muted text-sm mb-6">
+          {new Date(post.publishedAt).toLocaleDateString("en-IE", {
+            weekday: "long",
+            day: "numeric",
+            month: "long",
+            year: "numeric",
+          })}
+        </p>
+      )}
+
+      {/* Excerpt */}
+      {post.excerpt && (
+        <p className="text-light-text text-lg leading-relaxed mb-6 font-medium border-l-4 border-brand pl-4">
+          {post.excerpt}
+        </p>
+      )}
+
+      {/* Cover image */}
+      {post.coverImage && (
+        <div className="aspect-video overflow-hidden mb-8">
+          <img
+            src={post.coverImage}
+            alt={post.title}
+            className="w-full h-full object-cover"
+          />
+        </div>
+      )}
+
+      {/* Body */}
+      <div
+        className="prose prose-lg max-w-none
+          prose-headings:text-light-text prose-headings:font-bold
+          prose-h2:text-2xl prose-h2:mt-8 prose-h2:mb-4
+          prose-h3:text-xl prose-h3:mt-6 prose-h3:mb-3
+          prose-p:text-light-text prose-p:leading-relaxed prose-p:mb-4
+          prose-a:text-brand prose-a:no-underline hover:prose-a:underline
+          prose-strong:text-light-text
+          prose-blockquote:border-brand prose-blockquote:bg-light-surface prose-blockquote:px-4 prose-blockquote:py-2
+          prose-ul:text-light-text prose-ol:text-light-text
+          prose-li:mb-1
+          prose-img:w-full prose-img:my-6
+          prose-hr:border-light-border"
+        dangerouslySetInnerHTML={{ __html: post.body }}
+      />
+
+      {/* Back link */}
+      <div className="mt-12 pt-6 border-t border-light-border">
+        <Link href="/features" className="text-brand hover:text-brand-hover text-sm transition-colors">
+          ← Back to Features
+        </Link>
+      </div>
+    </div>
+  );
+}
